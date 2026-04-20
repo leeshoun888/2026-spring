@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GEO Content Generator</title>
+<style>
+  :root {
+    --primary: #0f172a;
+    --accent: #6366f1;
+    --accent-2: #8b5cf6;
+    --accent-hover: #4f46e5;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --error: #ef4444;
+    --error-bg: #fef2f2;
+    --info-bg: #eff6ff;
+    --info-text: #1e40af;
+    --code-bg: #0f172a;
+    --code-text: #e2e8f0;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Pretendard", "Noto Sans KR", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .hero {
+    text-align: center;
+    margin-bottom: 36px;
+    padding: 32px 0 24px;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 14px;
+    background: #ede9fe;
+    color: #6d28d9;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+  }
+
+  .hero h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -0.02em;
+  }
+
+  .hero p {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .input-row {
+    margin-bottom: 16px;
+  }
+
+  .input-row:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .input-row label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+
+  .input-row input,
+  .input-row select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.15s;
+    background: var(--card);
+    color: var(--text);
+    font-family: inherit;
+  }
+
+  .input-row input:focus,
+  .input-row select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  }
+
+  .api-wrap { position: relative; }
+
+  .toggle-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+
+  .toggle-btn:hover {
+    background: #e2e8f0;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 14px;
+  }
+
+  @media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+  }
+
+  .generate-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.2s, opacity 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.28);
+  }
+
+  .generate-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .status {
+    margin-top: 16px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .status.loading {
+    background: var(--info-bg);
+    color: var(--info-text);
+    display: flex;
+    align-items: center;
+  }
+
+  .status.error {
+    background: var(--error-bg);
+    color: #991b1b;
+    display: block;
+    white-space: pre-wrap;
+    font-family: "SF Mono", Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  .results { display: none; }
+
+  .results-intro {
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #eef2ff 0%, #f3e8ff 100%);
+    border: 1px solid #e0e7ff;
+    border-radius: 16px;
+    margin-bottom: 20px;
+  }
+
+  .results-intro h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--primary);
+  }
+
+  .results-intro p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .section-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px 28px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: box-shadow 0.15s;
+  }
+
+  .section-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .section-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+    color: white;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .section-meta { flex: 1; min-width: 0; }
+
+  .section-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    color: var(--primary);
+  }
+
+  .section-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.45;
+  }
+
+  .copy-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    background: #f1f5f9;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .copy-btn:hover { background: #e2e8f0; }
+
+  .copy-btn.copied {
+    background: var(--success-bg);
+    color: #065f46;
+    border-color: #a7f3d0;
+  }
+
+  .section-content {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  /* FAQ */
+  .faq-item { margin-bottom: 18px; }
+  .faq-item:last-child { margin-bottom: 0; }
+  .faq-q {
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--primary);
+  }
+  .faq-a { color: var(--text); }
+
+  /* Factsheet */
+  .factsheet-list { list-style: none; }
+  .factsheet-list li {
+    padding: 10px 0 10px 22px;
+    border-bottom: 1px dashed var(--border);
+    position: relative;
+  }
+  .factsheet-list li::before {
+    content: "▪";
+    color: var(--accent);
+    position: absolute;
+    left: 0;
+    top: 10px;
+  }
+  .factsheet-list li:last-child { border-bottom: none; }
+
+  /* Comparison */
+  .comparison-wrap { overflow-x: auto; }
+  table.comparison {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 4px;
+    font-size: 0.9rem;
+  }
+  table.comparison th,
+  table.comparison td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.comparison th {
+    background: #f8fafc;
+    font-weight: 600;
+    color: var(--primary);
+    border-bottom: 2px solid var(--border-strong);
+  }
+  table.comparison tbody tr:hover { background: #fafbfc; }
+
+  /* Use cases */
+  .usecase-item {
+    padding: 12px 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .usecase-item:last-child { border-bottom: none; }
+  .usecase-persona {
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-size: 0.95rem;
+  }
+
+  /* Listicle */
+  .listicle-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--primary);
+  }
+  .listicle-list {
+    list-style: none;
+    counter-reset: listicle;
+  }
+  .listicle-item {
+    padding: 12px 0 12px 38px;
+    position: relative;
+    counter-increment: listicle;
+    border-bottom: 1px dashed var(--border);
+  }
+  .listicle-item:last-child { border-bottom: none; }
+  .listicle-item::before {
+    content: counter(listicle);
+    position: absolute;
+    left: 0;
+    top: 12px;
+    width: 26px;
+    height: 26px;
+    background: #eef2ff;
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+  .listicle-item-title {
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: var(--primary);
+  }
+
+  /* Quote block */
+  .quote-block {
+    border-left: 4px solid var(--accent);
+    padding: 14px 18px;
+    background: #f8fafc;
+    border-radius: 0 10px 10px 0;
+    color: var(--text);
+  }
+
+  /* JSON code block */
+  pre.json-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 18px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    font-family: "SF Mono", Monaco, Consolas, "Courier New", monospace;
+    line-height: 1.55;
+    white-space: pre;
+  }
+
+  .search-progress {
+    margin-top: 12px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px dashed var(--border);
+    display: none;
+  }
+
+  .footer-note {
+    text-align: center;
+    margin-top: 40px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 1.9rem; }
+    .container { padding: 24px 16px 60px; }
+    .section-card, .panel { padding: 20px; }
+    .section-header { flex-wrap: wrap; }
+    .copy-btn { margin-top: 8px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <span class="hero-badge">GEO · Generative Engine Optimization</span>
+    <h1>GEO Content Generator</h1>
+    <p>제품명만 입력하면 Claude가 웹 검색으로 정보를 조사한 뒤 LLM 검색엔진(ChatGPT, Perplexity, Gemini, Claude 등)에 최적화된 10종 콘텐츠를 자동 생성합니다.</p>
+  </div>
+
+  <div class="panel">
+    <div class="input-row">
+      <label for="apiKey">Claude API Key</label>
+      <div class="api-wrap">
+        <input type="password" id="apiKey" placeholder="sk-ant-...">
+        <button class="toggle-btn" type="button" id="toggleKeyBtn">표시</button>
+      </div>
+      <div class="hint">키는 브라우저 localStorage에만 저장됩니다. console.anthropic.com 에서 발급받을 수 있습니다.</div>
+    </div>
+
+    <div class="input-row">
+      <div class="form-grid">
+        <div>
+          <label for="productName">제품명</label>
+          <input type="text" id="productName" placeholder="예: 매일유업 소화가 잘되는 우유">
+        </div>
+        <div>
+          <label for="modelSelect">모델</label>
+          <select id="modelSelect">
+            <option value="claude-opus-4-7">Claude Opus 4.7 (최고 품질)</option>
+            <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 (권장)</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (빠름)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn">GEO 콘텐츠 생성</button>
+
+    <div class="status" id="status"></div>
+    <div class="search-progress" id="searchProgress"></div>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <div class="footer-note">단일 HTML · 로컬 실행 가능 · API 키는 브라우저에만 저장됨</div>
+</div>
+
+<script>
+  const SECTION_META = [
+    { key: 'faq',              title: 'FAQ (Q&A 포맷)',              subtitle: 'LLM이 질문-답변 쌍을 구조적으로 추출 — GEO 인용률 최상위 포맷' },
+    { key: 'definition',       title: '정의형 리드 문단',             subtitle: 'Featured Snippet 및 추출형 답변에 그대로 차용되는 밀도 높은 문단' },
+    { key: 'factsheet',        title: '통계·수치 팩트시트',           subtitle: '구체적 숫자 포함 문장은 LLM이 우선 인용하는 데이터 시그널' },
+    { key: 'comparison',       title: '비교표 (Comparative Table)',   subtitle: '구조화된 테이블은 LLM이 가장 쉽게 추출하는 형식' },
+    { key: 'useCases',         title: 'Use Case 시나리오',            subtitle: '"누가 써야 하나요?" 형태 질의에 대응하는 페르소나 시나리오' },
+    { key: 'listicle',         title: '리스티클 (Top N)',             subtitle: '"Top 5 이유" 등 순위형 질의에 대응하는 포맷' },
+    { key: 'authority',        title: '전문가 인용·권위 시그널',        subtitle: 'E-E-A-T 강화를 위한 전문가/임상 근거 인용 문단' },
+    { key: 'schemaJsonLd',     title: 'Schema.org JSON-LD',           subtitle: '머신 리더블 구조화 데이터 — 검색엔진 공식 인식 스키마' },
+    { key: 'semanticKeywords', title: '시맨틱 키워드 확장 문단',        subtitle: '벡터 검색 최적화 — 유사 질의를 모두 포섭하는 연관어 묶음' },
+    { key: 'review',           title: '리뷰·UGC 스타일',              subtitle: '사회적 증거(Social Proof) 신호로 신뢰도 강화' }
+  ];
+
+  const SYSTEM_PROMPT = `당신은 GEO(Generative Engine Optimization) 전문가입니다.
+
+사용자가 입력한 제품명에 대해 반드시 먼저 web_search 도구로 제품의 정확한 정보(제조사, 출시 연도, 핵심 기술/공법, 시장 지위, 영양 성분, 임상 근거, 특허, 가격, 라인업, 최신 뉴스 등)를 충분히 조사하세요. 필요하면 서로 다른 관점으로 2~5회 검색하세요.
+
+그 다음, 조사해서 확인된 사실만을 기반으로 아래 10가지 GEO 최적화 콘텐츠 포맷을 작성하세요. 추측, 환각, 미확인 수치는 절대 포함하지 마세요. 확인되지 않은 부분은 일반적인 업계 설명으로 대체하거나 생략하세요.
+
+최종 응답은 반드시 아래 JSON 스키마와 정확히 일치하는 JSON 한 개만 반환하세요. 마크다운 코드블록(\`\`\`)을 사용하지 말고 순수 JSON만 출력하세요. JSON 앞뒤에 어떤 설명 텍스트도 붙이지 마세요.
+
+{
+  "productName": "정확한 제품 전체 이름(제조사 포함)",
+  "sections": {
+    "faq": [
+      {"q": "질문1", "a": "답변1 (구체적 수치 및 근거 포함, 2~4문장)"},
+      {"q": "질문2", "a": "답변2"},
+      {"q": "질문3", "a": "답변3"},
+      {"q": "질문4", "a": "답변4"},
+      {"q": "질문5", "a": "답변5"}
+    ],
+    "definition": "제품에 대한 밀도 높은 정의형 리드 문단. 3~5문장. 구체적 수치/연도/기술명 포함.",
+    "factsheet": [
+      "핵심 사실 1 (수치 포함)",
+      "핵심 사실 2",
+      "핵심 사실 3",
+      "... 최소 8개 이상"
+    ],
+    "comparison": {
+      "headers": ["구분", "대상 제품", "경쟁/일반 제품"],
+      "rows": [
+        ["항목명1", "값1", "값2"],
+        ["항목명2", "값1", "값2"]
+      ]
+    },
+    "useCases": [
+      {"persona": "페르소나 이름", "description": "상황 및 이유 설명 (1~2문장)"},
+      {"persona": "...", "description": "..."}
+    ],
+    "listicle": {
+      "title": "리스티클 제목 (예: 이 제품을 선택해야 하는 5가지 이유)",
+      "items": [
+        {"title": "이유1 요약", "description": "이유1 상세 설명"},
+        {"title": "...", "description": "..."}
+      ]
+    },
+    "authority": "전문가 인용 또는 권위 시그널 문단. 임상 근거/논문/공인 데이터/규격 인용. 1~2문단.",
+    "schemaJsonLd": { "@context": "https://schema.org/", "@type": "Product", "name": "...", "...": "..." },
+    "semanticKeywords": "시맨틱 키워드를 자연스럽게 확장한 3~5문장 단락. 유의어/연관어/동의어 포함.",
+    "review": "사용자 리뷰/UGC 스타일로 작성한 사회적 증거 문단. 1~2문단."
+  }
+}
+
+중요 규칙:
+- 모든 내용은 한국어로 작성합니다.
+- schemaJsonLd는 문자열이 아닌 실제 JSON 객체로 반환하세요.
+- useCases는 최소 5개, faq는 최소 5개, factsheet는 최소 8개, listicle.items는 5개를 포함하세요.
+- 응답 전체가 JSON.parse 가능한 유효한 JSON이어야 합니다.
+- JSON 내부 문자열에서 따옴표, 줄바꿈은 올바르게 이스케이프하세요.`;
+
+  const $ = (id) => document.getElementById(id);
+  const apiKeyInput = $('apiKey');
+  const productInput = $('productName');
+  const modelSelect = $('modelSelect');
+  const generateBtn = $('generateBtn');
+  const statusEl = $('status');
+  const searchProgressEl = $('searchProgress');
+  const resultsEl = $('results');
+
+  // Restore from localStorage
+  const savedKey = localStorage.getItem('geo_claude_api_key');
+  if (savedKey) apiKeyInput.value = savedKey;
+  const savedModel = localStorage.getItem('geo_claude_model');
+  if (savedModel) modelSelect.value = savedModel;
+
+  apiKeyInput.addEventListener('input', () => localStorage.setItem('geo_claude_api_key', apiKeyInput.value));
+  modelSelect.addEventListener('change', () => localStorage.setItem('geo_claude_model', modelSelect.value));
+
+  $('toggleKeyBtn').addEventListener('click', () => {
+    const btn = $('toggleKeyBtn');
+    if (apiKeyInput.type === 'password') {
+      apiKeyInput.type = 'text';
+      btn.textContent = '숨김';
+    } else {
+      apiKeyInput.type = 'password';
+      btn.textContent = '표시';
+    }
+  });
+
+  productInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generate();
+  });
+
+  generateBtn.addEventListener('click', generate);
+
+  function showStatus(html, type) {
+    statusEl.innerHTML = html;
+    statusEl.className = `status ${type}`;
+  }
+  function hideStatus() {
+    statusEl.style.display = 'none';
+    statusEl.className = 'status';
+  }
+  function showProgress(txt) {
+    searchProgressEl.textContent = txt;
+    searchProgressEl.style.display = 'block';
+  }
+  function hideProgress() {
+    searchProgressEl.style.display = 'none';
+  }
+
+  async function generate() {
+    const apiKey = apiKeyInput.value.trim();
+    const productName = productInput.value.trim();
+    const model = modelSelect.value;
+
+    if (!apiKey) { showStatus('Claude API Key를 먼저 입력하세요.', 'error'); return; }
+    if (!productName) { showStatus('제품명을 입력하세요.', 'error'); return; }
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = '생성 중…';
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    hideProgress();
+    showStatus(`<span class="spinner"></span>Claude가 "${escapeHtml(productName)}"에 대해 웹 검색 후 GEO 콘텐츠를 생성하고 있습니다. 1~3분 소요됩니다.`, 'loading');
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 16000,
+          system: SYSTEM_PROMPT,
+          messages: [
+            { role: 'user', content: `제품명: ${productName}\n\n이 제품에 대해 web_search 도구로 철저히 조사한 뒤, 지시한 JSON 스키마대로 GEO 최적화 콘텐츠를 생성해주세요.` }
+          ],
+          tools: [
+            { type: 'web_search_20250305', name: 'web_search', max_uses: 8 }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`API 오류 (${response.status})\n${errText}`);
+      }
+
+      const data = await response.json();
+
+      // Collect web search queries for transparency
+      const searchQueries = [];
+      (data.content || []).forEach(block => {
+        if (block.type === 'server_tool_use' && block.name === 'web_search') {
+          if (block.input && block.input.query) searchQueries.push(block.input.query);
+        }
+      });
+      if (searchQueries.length) {
+        showProgress(`웹 검색 수행: ${searchQueries.map(q => `"${q}"`).join(', ')}`);
+      }
+
+      // Extract final assistant text (concatenate all text blocks)
+      const textContent = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n');
+
+      if (!textContent) throw new Error('응답에 텍스트가 없습니다.\n\n전체 응답:\n' + JSON.stringify(data, null, 2).slice(0, 1000));
+
+      // Robust JSON extraction
+      const parsed = extractJSON(textContent);
+      if (!parsed || !parsed.sections) {
+        throw new Error(`JSON 파싱 실패. 원본 응답 일부:\n\n${textContent.slice(0, 1200)}`);
+      }
+
+      renderResults(parsed);
+      hideStatus();
+    } catch (err) {
+      showStatus(`오류: ${err.message}`, 'error');
+      hideProgress();
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'GEO 콘텐츠 생성';
+    }
+  }
+
+  function extractJSON(text) {
+    let t = text.trim();
+    // Strip markdown fences if present
+    t = t.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+    // If still wrapped in text, find first '{' and matching last '}'
+    const start = t.indexOf('{');
+    const end = t.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) return null;
+    const jsonStr = t.slice(start, end + 1);
+    try {
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      // Try naive fix: remove trailing commas before } or ]
+      const fixed = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+      try { return JSON.parse(fixed); } catch (_) { return null; }
+    }
+  }
+
+  function renderResults(data) {
+    resultsEl.style.display = 'block';
+
+    const intro = document.createElement('div');
+    intro.className = 'results-intro';
+    intro.innerHTML = `
+      <h2>${escapeHtml(data.productName || '제품')}</h2>
+      <p>아래 10개 포맷을 랜딩 페이지, FAQ 섹션, JSON-LD 스크립트 등 적절한 위치에 배치하세요. 각 섹션 우측 상단의 <strong>복사</strong> 버튼으로 원본 텍스트를 가져올 수 있습니다.</p>
+    `;
+    resultsEl.appendChild(intro);
+
+    SECTION_META.forEach((meta, idx) => {
+      const content = data.sections?.[meta.key];
+      if (content === undefined || content === null) return;
+
+      const card = document.createElement('div');
+      card.className = 'section-card';
+      card.innerHTML = `
+        <div class="section-header">
+          <div class="section-number">${idx + 1}</div>
+          <div class="section-meta">
+            <div class="section-title">${escapeHtml(meta.title)}</div>
+            <div class="section-subtitle">${escapeHtml(meta.subtitle)}</div>
+          </div>
+          <button class="copy-btn" type="button">복사</button>
+        </div>
+        <div class="section-content"></div>
+      `;
+
+      card.querySelector('.section-content').innerHTML = renderSection(meta.key, content);
+
+      const copyBtn = card.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', async () => {
+        const txt = sectionToText(meta.key, content);
+        try {
+          await navigator.clipboard.writeText(txt);
+          copyBtn.textContent = '복사됨';
+          copyBtn.classList.add('copied');
+          setTimeout(() => { copyBtn.textContent = '복사'; copyBtn.classList.remove('copied'); }, 1500);
+        } catch (_) {
+          // Fallback
+          const ta = document.createElement('textarea');
+          ta.value = txt; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+          copyBtn.textContent = '복사됨'; copyBtn.classList.add('copied');
+          setTimeout(() => { copyBtn.textContent = '복사'; copyBtn.classList.remove('copied'); }, 1500);
+        }
+      });
+
+      resultsEl.appendChild(card);
+    });
+
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderSection(key, c) {
+    switch (key) {
+      case 'faq':
+        if (!Array.isArray(c)) return '';
+        return c.map(it => `
+          <div class="faq-item">
+            <div class="faq-q">Q. ${escapeHtml(it.q || '')}</div>
+            <div class="faq-a">A. ${escapeHtml(it.a || '')}</div>
+          </div>`).join('');
+
+      case 'definition':
+        return `<div class="quote-block">${escapeHtml(c)}</div>`;
+
+      case 'factsheet':
+        if (!Array.isArray(c)) return '';
+        return `<ul class="factsheet-list">${c.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`;
+
+      case 'comparison': {
+        if (!c || !Array.isArray(c.headers) || !Array.isArray(c.rows)) return '';
+        return `
+          <div class="comparison-wrap">
+            <table class="comparison">
+              <thead><tr>${c.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+              <tbody>
+                ${c.rows.map(r => `<tr>${r.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      case 'useCases':
+        if (!Array.isArray(c)) return '';
+        return c.map(uc => `
+          <div class="usecase-item">
+            <div class="usecase-persona">${escapeHtml(uc.persona || '')}</div>
+            <div>${escapeHtml(uc.description || '')}</div>
+          </div>`).join('');
+
+      case 'listicle': {
+        if (!c || !Array.isArray(c.items)) return '';
+        return `
+          <div class="listicle-title">${escapeHtml(c.title || '')}</div>
+          <ol class="listicle-list">
+            ${c.items.map(it => `
+              <li class="listicle-item">
+                <div class="listicle-item-title">${escapeHtml(it.title || '')}</div>
+                <div>${escapeHtml(it.description || '')}</div>
+              </li>`).join('')}
+          </ol>`;
+      }
+
+      case 'authority':
+        return `<div class="quote-block">${escapeHtml(c)}</div>`;
+
+      case 'schemaJsonLd': {
+        const jsonStr = JSON.stringify(c, null, 2);
+        return `<pre class="json-block">${escapeHtml(jsonStr)}</pre>`;
+      }
+
+      case 'semanticKeywords':
+        return `<p>${escapeHtml(c)}</p>`;
+
+      case 'review':
+        return `<div class="quote-block">${escapeHtml(c)}</div>`;
+    }
+    return '';
+  }
+
+  function sectionToText(key, c) {
+    switch (key) {
+      case 'faq':
+        return c.map(it => `Q. ${it.q}\nA. ${it.a}`).join('\n\n');
+      case 'definition':
+        return c;
+      case 'factsheet':
+        return c.map(x => `- ${x}`).join('\n');
+      case 'comparison': {
+        const head = '| ' + c.headers.join(' | ') + ' |';
+        const sep  = '|' + c.headers.map(() => '---').join('|') + '|';
+        const body = c.rows.map(r => '| ' + r.join(' | ') + ' |').join('\n');
+        return [head, sep, body].join('\n');
+      }
+      case 'useCases':
+        return c.map(uc => `■ ${uc.persona}\n${uc.description}`).join('\n\n');
+      case 'listicle':
+        return `${c.title}\n\n` + c.items.map((it, i) => `${i + 1}. ${it.title}\n   ${it.description}`).join('\n\n');
+      case 'authority':
+        return c;
+      case 'schemaJsonLd':
+        return `<script type="application/ld+json">\n${JSON.stringify(c, null, 2)}\n<\/script>`;
+      case 'semanticKeywords':
+        return c;
+      case 'review':
+        return c;
+    }
+    return '';
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    if (typeof s !== 'string') s = String(s);
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+</script>
+</body>
+</html>

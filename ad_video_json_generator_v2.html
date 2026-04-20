@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매일유업 AI 크리에이티브 에이전트</title>
+<style>
+  :root {
+    --maeil-blue: #00448B;
+    --maeil-blue-hover: #003670;
+    --maeil-blue-light: #E8EEF6;
+    --maeil-blue-soft: #F5F8FC;
+    --text-primary: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --text-tertiary: #86868b;
+    --border: #d2d2d7;
+    --border-light: #e8e8ed;
+    --bg: #ffffff;
+    --bg-secondary: #fbfbfd;
+    --error: #c7372f;
+  }
+  * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+                 "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", Helvetica, Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.47;
+    letter-spacing: -0.022em;
+  }
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 56px 22px 80px;
+  }
+  /* 헤더 */
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .logo {
+    height: 44px;
+    width: auto;
+    display: inline-block;
+    margin-bottom: 28px;
+  }
+  h1 {
+    font-size: 40px;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 10px;
+  }
+  .subtitle {
+    font-size: 19px;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+  /* 카드 */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+  .card:focus-within {
+    border-color: var(--maeil-blue);
+  }
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    outline: none;
+    font-family: inherit;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  input[type="text"]::placeholder, input[type="password"]::placeholder {
+    color: var(--text-tertiary);
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: var(--maeil-blue);
+    background: var(--bg);
+  }
+  small {
+    display: block;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    margin-top: 8px;
+    letter-spacing: -0.01em;
+  }
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+  .input-row input { flex: 1; }
+  /* 버튼 - Apple pill style */
+  button {
+    background: var(--maeil-blue);
+    color: white;
+    border: none;
+    border-radius: 980px;
+    padding: 12px 22px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+    letter-spacing: -0.01em;
+    transition: background 0.2s, transform 0.1s;
+  }
+  button:hover { background: var(--maeil-blue-hover); }
+  button:active { transform: scale(0.97); }
+  button:disabled {
+    background: var(--border);
+    color: var(--text-tertiary);
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-secondary {
+    background: var(--maeil-blue-light);
+    color: var(--maeil-blue);
+  }
+  .btn-secondary:hover { background: #dbe4f0; }
+  /* 섹션 */
+  h2 {
+    font-size: 28px;
+    line-height: 1.14;
+    letter-spacing: 0.004em;
+    font-weight: 600;
+    margin: 48px 0 8px;
+    color: var(--text-primary);
+  }
+  .hint {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin: 0 0 20px;
+    letter-spacing: -0.01em;
+  }
+  /* 아이디어 카드 */
+  .idea-card {
+    background: var(--bg);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+  }
+  .idea-card:hover {
+    border-color: var(--maeil-blue);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0, 68, 139, 0.08);
+  }
+  .idea-card.selected {
+    border-color: var(--maeil-blue);
+    background: var(--maeil-blue-soft);
+    box-shadow: 0 4px 16px rgba(0, 68, 139, 0.1);
+  }
+  .idea-title {
+    font-weight: 600;
+    font-size: 19px;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+  .idea-concept {
+    font-size: 15px;
+    color: var(--maeil-blue);
+    margin-bottom: 10px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .idea-desc {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.52;
+    letter-spacing: -0.01em;
+  }
+  /* JSON 출력 */
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 48px 0 16px;
+  }
+  .header-row h2 { margin: 0; }
+  pre {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 22px 24px;
+    overflow-x: auto;
+    font-size: 13.5px;
+    line-height: 1.5;
+    font-family: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0;
+    letter-spacing: 0;
+  }
+  /* 상태 */
+  #status {
+    font-size: 14px;
+    color: var(--maeil-blue);
+    margin: 20px 0;
+    min-height: 22px;
+    letter-spacing: -0.01em;
+    text-align: center;
+  }
+  #status.error { color: var(--error); }
+  /* 스피너 */
+  .spinner {
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    border: 2px solid var(--maeil-blue);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin-right: 10px;
+    vertical-align: -2px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* 반응형 */
+  @media (max-width: 520px) {
+    .wrap { padding: 36px 18px 60px; }
+    h1 { font-size: 32px; }
+    .subtitle { font-size: 17px; }
+    .input-row { flex-direction: column; }
+    .input-row button { width: 100%; }
+    h2 { font-size: 24px; }
+    .logo { height: 38px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img class="logo" src="data:image/jpeg;base64,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" alt="Maeil">
+    <h1>AI 크리에이티브 에이전트</h1>
+    <p class="subtitle">제품명만 입력하면 15초 광고 영상 JSON 프롬프트까지.</p>
+  </header>
+
+  <div class="card">
+    <label for="apiKey">Claude API Key</label>
+    <input type="password" id="apiKey" placeholder="sk-ant-...">
+    <small>브라우저에 저장됩니다. 개인 사용 전용.</small>
+  </div>
+
+  <div class="card">
+    <label for="product">제품명</label>
+    <div class="input-row">
+      <input type="text" id="product" placeholder="예: 상하목장 유기농 우유, 앱솔루트 명작, 바리스타룰스 ...">
+      <button id="generateBtn">아이디어 5개 생성</button>
+    </div>
+  </div>
+
+  <div id="status"></div>
+
+  <div id="ideasSection" style="display:none;">
+    <h2>광고 시안</h2>
+    <p class="hint">마음에 드는 시안을 선택하면 Seedance 2.0용 JSON 프롬프트가 생성됩니다.</p>
+    <div id="ideasContainer"></div>
+  </div>
+
+  <div id="jsonSection" style="display:none;">
+    <div class="header-row">
+      <h2>JSON 프롬프트</h2>
+      <button id="copyBtn" class="btn-secondary">복사</button>
+    </div>
+    <pre id="jsonOutput"></pre>
+  </div>
+</div>
+
+<!-- JSON 양식 가이드 (AI에게 그대로 전달됨) -->
+<script type="text/plain" id="jsonGuide"># The Complete Guide to JSON Prompting for Seedance 2.0
+
+## Why Structured Prompts Beat Paragraph Prompts Every Time
+
+Think about how a film crew receives a shot list. It isn't a rambling note from the director — it's a structured breakdown: scene number, lens, blocking, lighting setup, audio cue. JSON prompting works the same way. Instead of bundling your entire vision into a single flowing sentence, you hand the model a clean, labeled blueprint built from braces, keys, commas, and nested objects.
+
+JSON — short for JavaScript Object Notation — is effectively the mother tongue of modern generative video systems. These models parse structured data far more reliably than they parse mood-heavy prose, which means a well-formed JSON block translates directly into what appears on screen.
+
+### The Problem With Paragraph Prompts
+
+Consider a common paragraph-style instruction:
+
+> A skateboarder glides through a neon-lit Tokyo alley at midnight. The atmosphere feels rainy and moody, with reflections bouncing off the pavement. The camera follows from behind with a smooth tracking motion, giving it a dreamy cyberpunk vibe.
+
+Looks fine on paper. But when handed to a video model, several things can go sideways:
+
+- **Pace drift** — Is the skateboarder cruising leisurely or pushing hard? The model guesses, and the motion often looks rubbery or teleported.
+- **Lighting ambiguity** — "Neon-lit" can turn into a blown-out rainbow mess or a flat purple wash.
+- **Atmosphere overreach** — "Rainy and moody" might deliver a hurricane or, alternatively, barely a mist.
+- **Camera interpretation** — "Tracking motion" is vague. Dolly? Gimbal? Drone? The output shakes or glides unpredictably.
+- **Scene drift** — The alley might morph mid-shot, neon signs flickering in and out of existence.
+
+Fixing these issues means regenerating, burning credits, and rewriting half the prompt. Every time.
+
+### The JSON Alternative
+
+Here's the same idea, restructured:
+
+```json
+{
+  "subject": "skateboarder",
+  "appearance": "black hoodie, cargo pants, worn sneakers",
+  "action": "gliding forward at a steady cruising pace",
+  "environment": {
+    "location": "narrow Tokyo alley",
+    "time_of_day": "midnight",
+    "weather": "light drizzle, wet asphalt",
+    "lighting": "neon pink and cyan signage reflecting on puddles",
+    "background_elements": ["steam vents", "hanging lanterns", "flickering kanji signs"]
+  },
+  "camera": {
+    "position": "low angle, behind subject",
+    "lens": "24mm",
+    "movement": "smooth gimbal tracking shot",
+    "speed": "matching subject velocity"
+  },
+  "mood": "dreamy, cyberpunk",
+  "style": "cinematic realism",
+  "avoid": ["motion blur artifacts", "teleporting limbs", "distorted neon text"]
+}
+```
+
+The best part? You're not writing full sentences. You're writing labels and short values — and the output is sharper for it.
+
+## What JSON Prompting Actually Gets You
+
+Structured prompts trade vagueness for precision. Here's what changes when you make the switch.
+
+1. **Director-Level Control** — Every parameter is its own field. Want to dial in a specific look? Slot a camera object with lens, aperture, focal_length, shot_type, and movement. A 35mm lens at f/2.8 with a slow dolly-in produces something fundamentally different from a 14mm wide at f/11 — and JSON lets you specify exactly that.
+2. **Layered Scene Orchestration** — Real video contains stacked motion: a character moves, the camera moves, the background shifts, lighting evolves, and sound layers in — all at once. JSON handles this with nested objects instead of runaway sentences.
+3. **Template-Driven Consistency** — For brand campaigns, series content, or recurring characters, JSON becomes a reusable scaffold. Lock in your character definition, lighting palette, and camera grammar once — then swap out only the action or location field for each new shot.
+4. **Synchronized Audio Direction** — Modern video models generate sound alongside visuals. JSON makes timing precise via an audio_track array with time, type, content keys.
+5. **Fewer Hallucinations** — Ambiguity is where models go rogue. Structured fields leave less room for invention — so you get stable faces, consistent wardrobe, locked-in lighting, and physics that don't break mid-clip.
+
+## Meet Seedance 2.0: Why It Pairs Exceptionally Well With JSON
+
+Seedance 2.0 is ByteDance's latest multimodal video model, and it's arguably the strongest match for JSON prompting available right now.
+
+- **Multimodal input at scale.** Seedance 2.0 accepts text, images, videos, and audio as inputs — up to 12 assets in a single generation (9 images, 3 video clips up to 15 seconds each, 3 audio clips up to 15 seconds each, plus text prompts).
+- **Native audio generation.** Generate video and audio simultaneously. Your audio_track field isn't aspirational — it's enforced.
+- **Multi-shot consistency.** The model maintains stable character appearance across frames and shots, solving character drift, style inconsistency, and detail loss.
+- **Camera and motion replication.** Upload a reference video with camera movements or choreography you like, and the model replicates them with your own content.
+- **Flexible output.** 4 to 15 seconds in length, aspect ratios 16:9 / 9:16 / 4:3 / 3:4 / 21:9 / 1:1, up to 1080p.
+
+## Building a Seedance 2.0 JSON Prompt — Step by Step
+
+### Step 1: Sketch Your Shot Before You Type
+
+Before opening a JSON editor, answer these questions:
+
+- **Subject** — Who or what anchors the frame?
+- **Action** — What are they doing, and at what tempo?
+- **Environment** — Where? When? Weather? Time of day?
+- **Camera** — Lens, movement, angle, framing
+- **Lighting** — Direction, color temperature, intensity, contrast
+- **Style** — Photoreal, anime, 3D render, claymation, documentary?
+- **Audio** — Dialogue, ambient, music, SFX
+- **Exclusions** — What should never appear?
+
+These become your top-level keys.
+
+### Step 2: Build the Structure
+
+Here's a reusable Seedance 2.0 scaffold:
+
+```json
+{
+  "model": "Seedance 2.0",
+  "scene": {
+    "subject": {
+      "description": "[who or what]",
+      "appearance": "[wardrobe, hair, distinguishing features]",
+      "age_range": "[optional]"
+    },
+    "action": "[specific verb phrase with tempo]",
+    "environment": {
+      "location": "[specific place]",
+      "time_of_day": "[precise time]",
+      "weather": "[optional]",
+      "lighting": "[direction + color + intensity]",
+      "background_elements": ["element 1", "element 2", "element 3"]
+    },
+    "camera": {
+      "lens": "[focal length]",
+      "aperture": "[f-stop]",
+      "shot_type": "[wide / medium / close-up / etc.]",
+      "angle": "[eye-level / low / high / Dutch]",
+      "movement": "[static / pan / tilt / dolly / tracking / crane]",
+      "direction": "[left / right / forward / backward]"
+    },
+    "style": "[visual style]",
+    "mood": "[emotional tone]"
+  },
+  "audio_track": [
+    {"time": 0.0, "type": "ambient", "content": "[ambient sound]"},
+    {"time": 0.0, "type": "music", "style": "[genre / instrument]"},
+    {"time": 2.0, "type": "sfx", "content": "[specific sound effect]"}
+  ],
+  "output": {
+    "duration_seconds": 8,
+    "resolution": "1080p",
+    "aspect_ratio": "16:9"
+  },
+  "avoid": ["element 1", "element 2"]
+}
+```
+
+Copy this as your base. Swap values. Ship videos.
+
+### Step 3: Worked Example — Same Scaffold, Different Scene
+
+Say you want to pivot the earlier Tokyo skateboarder into something completely different — a traditional tea ceremony in Kyoto, shot in a documentary style.
+
+```json
+{
+  "model": "Seedance 2.0",
+  "scene": {
+    "subject": {
+      "description": "an elderly tea master",
+      "appearance": "indigo kimono, silver hair tied back, calm expression"
+    },
+    "action": "slowly whisking matcha in a ceramic bowl with deliberate, practiced motion",
+    "environment": {
+      "location": "tatami-floored tea room in Kyoto",
+      "time_of_day": "late afternoon",
+      "lighting": "warm diffused light filtering through shoji screens",
+      "background_elements": ["hanging scroll", "single ikebana arrangement", "cast-iron kettle steaming"]
+    },
+    "camera": {
+      "lens": "50mm",
+      "aperture": "f/2.0",
+      "shot_type": "medium close-up",
+      "angle": "eye-level",
+      "movement": "static tripod shot",
+      "focus": "shallow depth of field on the whisk"
+    },
+    "style": "documentary realism",
+    "mood": "meditative, reverent"
+  },
+  "audio_track": [
+    {"time": 0.0, "type": "ambient", "content": "quiet room tone"},
+    {"time": 0.0, "type": "sfx", "content": "bamboo whisk against ceramic"},
+    {"time": 2.5, "type": "sfx", "content": "distant temple bell"},
+    {"time": 5.0, "type": "sfx", "content": "kettle softly steaming"}
+  ],
+  "output": {
+    "duration_seconds": 10,
+    "resolution": "1080p",
+    "aspect_ratio": "16:9"
+  },
+  "avoid": ["modern objects", "fast cuts", "harsh shadows"]
+}
+```
+
+Same skeleton. Entirely different film.
+
+### Step 4: Iterate Surgically
+
+This is where JSON pays off. Don't like the lighting? Change the lighting field only. Want to test a wider lens? Adjust camera.lens. Everything else stays locked. Compare that to rewriting a paragraph and watching five other things drift unpredictably.
+
+## Advanced Seedance 2.0 Patterns
+
+### Multi-Shot Sequences
+
+Seedance 2.0 handles multi-shot payloads in a single generation. Structure them as an array:
+
+```json
+{
+  "model": "Seedance 2.0",
+  "shots": [
+    {
+      "shot_id": 1,
+      "duration": 4,
+      "description": "Wide establishing shot of a coastal cliff at dawn",
+      "camera": {"lens": "14mm", "movement": "slow aerial push-in"},
+      "character_ref": "character_01"
+    },
+    {
+      "shot_id": 2,
+      "duration": 5,
+      "description": "Medium shot of the same character looking out to sea, wind in her hair",
+      "camera": {"lens": "85mm", "movement": "slight handheld drift"},
+      "character_ref": "character_01"
+    },
+    {
+      "shot_id": 3,
+      "duration": 6,
+      "description": "Close-up on her hands gripping a letter, fingers trembling",
+      "camera": {"lens": "100mm macro", "movement": "static"},
+      "character_ref": "character_01"
+    }
+  ],
+  "character_library": {
+    "character_01": {
+      "appearance": "woman in her late 20s, auburn hair, cream wool sweater, weathered silver ring",
+      "maintain_consistency": true
+    }
+  },
+  "continuity": {
+    "lighting": "cool dawn, soft overcast",
+    "color_grade": "muted teal and warm skin tones",
+    "audio_continuity": true
+  }
+}
+```
+
+The character_library block is what keeps her face, hair, and sweater identical across all three shots — exploiting Seedance 2.0's consistency engine directly.
+
+### Reference-Driven Generation
+
+When you're supplying images, video, or audio as references, tell the model what each one is for:
+
+```json
+{
+  "model": "Seedance 2.0",
+  "references": {
+    "character_image": {"role": "subject appearance", "apply_to": "all shots"},
+    "motion_video": {"role": "camera movement reference", "apply_to": "shot 2 only"},
+    "audio_sample": {"role": "voice timbre for dialogue", "apply_to": "full sequence"}
+  },
+  "prompt": "A martial artist rehearsing a slow kata in a bamboo forest at dawn."
+}
+```
+
+### Physics-Aware Actions
+
+Seedance 2.0 is strong on physics. Lean into that with explicit physics fields:
+
+```json
+{
+  "action": "glass shattering on stone floor",
+  "physics": {
+    "gravity": "realistic",
+    "fragmentation": "radial scatter pattern",
+    "debris_count": "medium",
+    "sound_sync": true
+  },
+  "slow_motion": {
+    "enabled": true,
+    "factor": 0.25,
+    "target_moment": "impact"
+  }
+}
+```
+
+## Practical Tips for Cleaner Output
+
+- **Prioritize what matters.** Don't stuff every possible field. If lighting isn't critical, leave it loose and let the model interpret. Over-specification can box the model into awkward compromises.
+- **One idea per key.** Writing "lighting": "warm sunset with cold blue shadows and dramatic fog" mashes three concepts into one field. Split them: key_light, fill_light, atmosphere.
+- **Save your templates.** Once you dial in a look — say, a noir detective style — keep that JSON as a reusable preset.
+- **Use avoid actively.** Seedance 2.0 responds well to exclusion lists. If you keep getting extra limbs, distorted text, or weird lens flare, name them in avoid.
+- **Match your duration to your action.** A complex multi-beat action in 4 seconds will feel rushed. A simple static scene stretched to 15 seconds will feel empty.
+- **Test small, then scale.** Generate a 4-second version first to validate the look. Once the core scene works, extend to full length.
+
+## Wrapping Up
+
+JSON prompting isn't a gimmick — it's what separates hobbyist output from production-grade video. Paragraph prompts leave too much to chance; structured prompts hand the model a shot list. Seedance 2.0 is built for this workflow.</script>
+
+<script>
+const MODEL = "claude-sonnet-4-5";
+const API_URL = "https://api.anthropic.com/v1/messages";
+
+const JSON_GUIDE = document.getElementById("jsonGuide").textContent;
+
+const apiKeyEl = document.getElementById("apiKey");
+const productEl = document.getElementById("product");
+const generateBtn = document.getElementById("generateBtn");
+const statusEl = document.getElementById("status");
+const ideasSection = document.getElementById("ideasSection");
+const ideasContainer = document.getElementById("ideasContainer");
+const jsonSection = document.getElementById("jsonSection");
+const jsonOutput = document.getElementById("jsonOutput");
+const copyBtn = document.getElementById("copyBtn");
+
+apiKeyEl.value = localStorage.getItem("claude_api_key") || "";
+apiKeyEl.addEventListener("input", () => {
+  localStorage.setItem("claude_api_key", apiKeyEl.value);
+});
+
+function setStatus(msg, isError = false, loading = false) {
+  statusEl.className = isError ? "error" : "";
+  if (loading) {
+    statusEl.innerHTML = `<span class="spinner"></span>${msg}`;
+  } else {
+    statusEl.textContent = msg;
+  }
+}
+
+async function callClaude(messages, useWebSearch = false) {
+  const apiKey = apiKeyEl.value.trim();
+  if (!apiKey) throw new Error("API Key를 먼저 입력해주세요.");
+
+  const body = {
+    model: MODEL,
+    max_tokens: 8192,
+    messages: messages
+  };
+  if (useWebSearch) {
+    body.tools = [{ type: "web_search_20250305", name: "web_search" }];
+  }
+
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify(body)
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`API 오류 (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json();
+  const text = data.content
+    .filter(b => b.type === "text")
+    .map(b => b.text)
+    .join("\n");
+  return text;
+}
+
+function extractJson(text) {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  const arr = text.match(/\[[\s\S]*\]/);
+  if (arr) return arr[0];
+  const obj = text.match(/\{[\s\S]*\}/);
+  if (obj) return obj[0];
+  return text.trim();
+}
+
+// STEP 1: 아이디어 5개 생성
+generateBtn.addEventListener("click", async () => {
+  const product = productEl.value.trim();
+  if (!product) {
+    setStatus("제품명을 입력해주세요.", true);
+    return;
+  }
+  if (!apiKeyEl.value.trim()) {
+    setStatus("API Key를 먼저 입력해주세요.", true);
+    return;
+  }
+
+  generateBtn.disabled = true;
+  ideasSection.style.display = "none";
+  jsonSection.style.display = "none";
+  ideasContainer.innerHTML = "";
+  setStatus("웹에서 제품 정보를 조사하고 광고 시안 5개를 생성하는 중...", false, true);
+
+  const prompt = `당신은 세계적인 광고 영상 감독이자 크리에이티브 디렉터입니다.
+
+먼저 웹 검색 도구를 사용해서 "${product}" 제품에 대해 조사해주세요. (제품의 특징, 타겟, 브랜드 톤, 최근 광고 트렌드 등)
+
+조사가 끝나면, 이 제품을 위한 **15초짜리 광고 영상 시안 5개**를 제안해주세요.
+각 시안은 서로 다른 컨셉, 톤, 비주얼 스타일을 가져야 합니다.
+(예: 감성적 스토리텔링 / 미니멀 고급 / 다이나믹 액션 / 유머러스 / 초현실주의 등 다양하게)
+
+**중요: 반드시 아래 JSON 배열 형식으로만 응답해주세요. 다른 설명이나 마크다운 코드블록 없이 순수 JSON 배열만 출력하세요.**
+
+[
+  {
+    "title": "시안의 임팩트 있는 제목",
+    "concept": "핵심 컨셉을 한 줄로 요약",
+    "description": "15초 영상에서 보여질 구체적인 장면 구성, 시각적 스타일, 카메라 무빙, 사운드/음악, 전달하고자 하는 메시지를 4-6문장으로 상세히 설명"
+  }
+]
+
+정확히 5개의 시안을 JSON 배열로 반환해주세요.`;
+
+  try {
+    const text = await callClaude([{ role: "user", content: prompt }], true);
+    const jsonStr = extractJson(text);
+    let ideas;
+    try {
+      ideas = JSON.parse(jsonStr);
+    } catch (e) {
+      throw new Error("AI 응답을 JSON으로 파싱하지 못했습니다.\n\n원본 응답:\n" + text);
+    }
+    if (!Array.isArray(ideas) || ideas.length === 0) {
+      throw new Error("시안 배열이 비어있습니다.");
+    }
+    renderIdeas(ideas, product);
+    setStatus(`${ideas.length}개의 시안이 생성되었습니다. 하나를 선택하세요.`);
+  } catch (err) {
+    setStatus(err.message, true);
+    console.error(err);
+  } finally {
+    generateBtn.disabled = false;
+  }
+});
+
+function renderIdeas(ideas, product) {
+  ideasContainer.innerHTML = "";
+  ideas.forEach((idea, i) => {
+    const card = document.createElement("div");
+    card.className = "idea-card";
+    card.innerHTML = `
+      <div class="idea-title">${i + 1}. ${escapeHtml(idea.title || "시안 " + (i + 1))}</div>
+      <div class="idea-concept">${escapeHtml(idea.concept || "")}</div>
+      <div class="idea-desc">${escapeHtml(idea.description || "")}</div>
+    `;
+    card.addEventListener("click", () => {
+      document.querySelectorAll(".idea-card").forEach(c => c.classList.remove("selected"));
+      card.classList.add("selected");
+      generateFinalJson(idea, product);
+    });
+    ideasContainer.appendChild(card);
+  });
+  ideasSection.style.display = "block";
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+// STEP 2: 선택된 시안 → Seedance 2.0 JSON 프롬프트
+async function generateFinalJson(selectedIdea, product) {
+  jsonSection.style.display = "none";
+  jsonOutput.textContent = "";
+  setStatus("선택된 시안을 Seedance 2.0 JSON 프롬프트로 변환하는 중...", false, true);
+
+  const prompt = `다음 JSON 양식을 100% 정독한 다음에, 그 양식을 숙지하고 선택된 광고 아이디어를 15초짜리 영상으로 구현하기 위한 JSON 프롬프트를 적어줘.
+
+==========================================
+선택된 광고 아이디어
+==========================================
+제품명: ${product}
+시안 제목: ${selectedIdea.title || ""}
+컨셉: ${selectedIdea.concept || ""}
+상세 설명: ${selectedIdea.description || ""}
+
+==========================================
+JSON 양식 (아래 가이드를 전체 숙지할 것)
+==========================================
+${JSON_GUIDE}
+
+==========================================
+출력 요구사항
+==========================================
+- 위 가이드의 스타일과 구조를 따라, 15초짜리 광고 영상을 위한 Seedance 2.0 JSON 프롬프트를 작성해줘.
+- output.duration_seconds는 반드시 15로 설정.
+- 선택된 시안의 컨셉/톤/비주얼을 충실히 반영.
+- 여러 샷이 필요하면 "shots" 배열과 "character_library" / "continuity" 블록을 활용.
+- audio_track의 time은 0~15초 범위 내에서 정확하게 배치.
+- avoid 필드에 피해야 할 요소 명시.
+- **반드시 \`\`\`json 코드블록 안에 완전한 JSON만 출력**하고, 추가 설명은 최소화.`;
+
+  try {
+    const text = await callClaude([{ role: "user", content: prompt }], false);
+    const jsonStr = extractJson(text);
+    let pretty = jsonStr;
+    try {
+      pretty = JSON.stringify(JSON.parse(jsonStr), null, 2);
+    } catch (_) {}
+    jsonOutput.textContent = pretty;
+    jsonSection.style.display = "block";
+    setStatus("JSON 프롬프트가 생성되었습니다.");
+    jsonSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) {
+    setStatus(err.message, true);
+    console.error(err);
+  }
+}
+
+copyBtn.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(jsonOutput.textContent);
+    copyBtn.textContent = "복사됨";
+    setTimeout(() => (copyBtn.textContent = "복사"), 1500);
+  } catch (e) {
+    copyBtn.textContent = "복사 실패";
+    setTimeout(() => (copyBtn.textContent = "복사"), 1500);
+  }
+});
+</script>
+</body>
+</html>

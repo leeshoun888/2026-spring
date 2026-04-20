@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>매일유업 GEO AI 에이전트</title>
+<style>
+  /* ============================================================
+     Maeil × Apple-style Design System
+     Brand blue extracted from logo: #00458B
+     ============================================================ */
+  :root {
+    --maeil-blue: #00458B;
+    --maeil-blue-hover: #003872;
+    --maeil-blue-light: #E8F0FB;
+    --maeil-blue-softer: #F5F9FD;
+
+    --bg: #ffffff;
+    --bg-subtle: #fbfbfd;      /* Apple's subtle gray-white */
+    --text: #1d1d1f;           /* Apple's primary text */
+    --text-secondary: #424245; /* Apple's secondary text */
+    --text-muted: #6e6e73;     /* Apple's muted */
+    --border: #d2d2d7;         /* Apple's divider */
+    --border-subtle: #e8e8ed;
+
+    --success: #00875a;
+    --success-bg: #e7f7f0;
+    --error: #bf1650;
+    --error-bg: #fef1f4;
+
+    --code-bg: #1d1d1f;
+    --code-text: #f5f5f7;
+
+    --radius-card: 18px;
+    --radius-input: 12px;
+    --radius-button: 980px;    /* Apple's pill buttons */
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 40px rgba(0,0,0,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.47;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 17px;
+    letter-spacing: -0.011em;
+  }
+
+  /* ==================== Top Nav with Logo ==================== */
+  .navbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    height: 56px;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+  }
+
+  .navbar-inner {
+    max-width: 1100px;
+    width: 100%;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-img {
+    height: 32px;
+    width: auto;
+    display: block;
+  }
+
+  .logo-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border);
+  }
+
+  .logo-sub {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: -0.005em;
+  }
+
+  /* ==================== Container ==================== */
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 64px 24px 96px;
+  }
+
+  /* ==================== Hero ==================== */
+  .hero {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+
+  .hero-eyebrow {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--maeil-blue);
+    letter-spacing: -0.011em;
+    margin-bottom: 8px;
+  }
+
+  .hero h1 {
+    font-size: 56px;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 18px;
+  }
+
+  .hero p {
+    font-size: 21px;
+    line-height: 1.4;
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 680px;
+    margin: 0 auto;
+    letter-spacing: -0.015em;
+  }
+
+  @media (max-width: 734px) {
+    .hero h1 { font-size: 40px; letter-spacing: -0.025em; }
+    .hero p { font-size: 18px; }
+    .container { padding: 40px 20px 72px; }
+  }
+
+  /* ==================== Panel (input card) ==================== */
+  .panel {
+    background: var(--bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 32px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.003em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 16px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-input);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    letter-spacing: -0.01em;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    outline: none;
+    border-color: var(--maeil-blue);
+    box-shadow: 0 0 0 4px rgba(0, 69, 139, 0.12);
+  }
+
+  .field input::placeholder {
+    color: #86868b;
+  }
+
+  .api-wrap { position: relative; }
+
+  .toggle-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--maeil-blue);
+    cursor: pointer;
+    border-radius: 8px;
+    font-family: inherit;
+    transition: background 0.15s ease;
+  }
+
+  .toggle-btn:hover {
+    background: var(--maeil-blue-light);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 240px;
+    gap: 16px;
+  }
+
+  @media (max-width: 734px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .panel { padding: 24px; }
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    line-height: 1.5;
+    letter-spacing: -0.003em;
+  }
+
+  /* ==================== Apple-style button ==================== */
+  .generate-btn {
+    width: 100%;
+    margin-top: 24px;
+    padding: 14px 28px;
+    background: var(--maeil-blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-button);
+    font-size: 17px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+    letter-spacing: -0.01em;
+  }
+
+  .generate-btn:hover:not(:disabled) {
+    background: var(--maeil-blue-hover);
+  }
+
+  .generate-btn:active:not(:disabled) {
+    transform: scale(0.985);
+  }
+
+  .generate-btn:disabled {
+    background: #86868b;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  /* ==================== Status ==================== */
+  .status {
+    margin-top: 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 14px;
+    display: none;
+    letter-spacing: -0.005em;
+  }
+
+  .status.loading {
+    background: var(--maeil-blue-softer);
+    color: var(--maeil-blue);
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--maeil-blue-light);
+  }
+
+  .status.error {
+    background: var(--error-bg);
+    color: var(--error);
+    display: block;
+    white-space: pre-wrap;
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    border: 1px solid #f9d5df;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .search-progress {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 10px 14px;
+    background: var(--bg-subtle);
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    display: none;
+    letter-spacing: -0.003em;
+    line-height: 1.55;
+  }
+
+  /* ==================== Results ==================== */
+  .results { display: none; }
+
+  .results-intro {
+    padding: 32px;
+    background: linear-gradient(180deg, var(--maeil-blue-softer) 0%, var(--bg) 100%);
+    border: 1px solid var(--maeil-blue-light);
+    border-radius: var(--radius-card);
+    margin-bottom: 20px;
+  }
+
+  .results-intro h2 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .results-intro p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    letter-spacing: -0.008em;
+    line-height: 1.5;
+  }
+
+  .section-card {
+    background: var(--bg);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-card);
+    padding: 32px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  .section-card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  @media (max-width: 734px) {
+    .section-card { padding: 24px; }
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .section-number {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--maeil-blue);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-meta { flex: 1; min-width: 0; }
+
+  .section-title {
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    color: var(--text);
+    margin-bottom: 3px;
+  }
+
+  .section-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.45;
+    letter-spacing: -0.003em;
+  }
+
+  .copy-btn {
+    flex-shrink: 0;
+    padding: 7px 16px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-button);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s ease;
+    font-family: inherit;
+    letter-spacing: -0.005em;
+  }
+
+  .copy-btn:hover {
+    background: var(--bg-subtle);
+    border-color: var(--maeil-blue);
+    color: var(--maeil-blue);
+  }
+
+  .copy-btn.copied {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: #b4e4cf;
+  }
+
+  .section-content {
+    font-size: 15px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+    letter-spacing: -0.008em;
+  }
+
+  /* ==================== FAQ ==================== */
+  .faq-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .faq-item:first-child { padding-top: 0; }
+  .faq-item:last-child { padding-bottom: 0; border-bottom: none; }
+
+  .faq-q {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+    font-size: 15px;
+    letter-spacing: -0.012em;
+  }
+  .faq-a { color: var(--text-secondary); }
+
+  /* ==================== Factsheet ==================== */
+  .factsheet-list { list-style: none; }
+  .factsheet-list li {
+    padding: 11px 0 11px 24px;
+    border-bottom: 1px solid var(--border-subtle);
+    position: relative;
+  }
+  .factsheet-list li::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: var(--maeil-blue);
+    border-radius: 50%;
+    position: absolute;
+    left: 4px;
+    top: 18px;
+  }
+  .factsheet-list li:last-child { border-bottom: none; }
+
+  /* ==================== Comparison table ==================== */
+  .comparison-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+  }
+
+  table.comparison {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  table.comparison th,
+  table.comparison td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+    letter-spacing: -0.005em;
+  }
+  table.comparison th {
+    background: var(--bg-subtle);
+    font-weight: 600;
+    color: var(--text);
+    font-size: 13px;
+    border-bottom: 1px solid var(--border);
+  }
+  table.comparison tbody tr:last-child td { border-bottom: none; }
+
+  /* ==================== Use cases ==================== */
+  .usecase-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .usecase-item:first-child { padding-top: 0; }
+  .usecase-item:last-child { padding-bottom: 0; border-bottom: none; }
+  .usecase-persona {
+    font-weight: 600;
+    color: var(--maeil-blue);
+    margin-bottom: 4px;
+    font-size: 14px;
+    letter-spacing: -0.008em;
+  }
+
+  /* ==================== Listicle ==================== */
+  .listicle-title {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+  .listicle-list {
+    list-style: none;
+    counter-reset: listicle;
+  }
+  .listicle-item {
+    padding: 14px 0 14px 44px;
+    position: relative;
+    counter-increment: listicle;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+  .listicle-item:first-child { padding-top: 0; }
+  .listicle-item:first-child::before { top: 0; }
+  .listicle-item:last-child { padding-bottom: 0; border-bottom: none; }
+  .listicle-item::before {
+    content: counter(listicle);
+    position: absolute;
+    left: 0;
+    top: 14px;
+    width: 28px;
+    height: 28px;
+    background: var(--maeil-blue-light);
+    color: var(--maeil-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  .listicle-item-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
+  }
+
+  /* ==================== Quote block ==================== */
+  .quote-block {
+    border-left: 3px solid var(--maeil-blue);
+    padding: 14px 20px;
+    background: var(--maeil-blue-softer);
+    border-radius: 0 10px 10px 0;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  /* ==================== JSON code block ==================== */
+  pre.json-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 20px;
+    border-radius: 12px;
+    overflow-x: auto;
+    font-size: 12.5px;
+    font-family: "SF Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
+    line-height: 1.6;
+    white-space: pre;
+    letter-spacing: 0;
+  }
+
+  /* ==================== Influencer Guide ==================== */
+  .guide-overview {
+    padding: 14px 18px;
+    background: var(--maeil-blue-softer);
+    border-left: 3px solid var(--maeil-blue);
+    border-radius: 0 10px 10px 0;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+  }
+
+  .guide-category {
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    background: var(--bg);
+  }
+  .guide-category:last-child { margin-bottom: 0; }
+
+  .guide-category-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--maeil-blue);
+    letter-spacing: -0.012em;
+    margin-bottom: 4px;
+  }
+
+  .guide-category-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    letter-spacing: -0.005em;
+  }
+
+  .guide-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin: 10px 0 6px;
+  }
+
+  .guide-templates {
+    list-style: none;
+    margin-bottom: 4px;
+  }
+  .guide-templates li {
+    padding: 8px 12px;
+    background: var(--bg-subtle);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .guide-templates li:last-child { margin-bottom: 0; }
+
+  .guide-examples {
+    list-style: none;
+  }
+  .guide-examples li {
+    padding: 8px 0 8px 20px;
+    position: relative;
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .guide-examples li::before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    color: var(--maeil-blue);
+    font-weight: 600;
+  }
+
+  /* ==================== Footer ==================== */
+  .footer-note {
+    text-align: center;
+    margin-top: 56px;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: -0.003em;
+  }
+  .footer-note strong { color: var(--maeil-blue); font-weight: 500; }
+</style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-inner">
+    <div class="logo-wrap">
+      <img class="logo-img" src="data:image/jpeg;base64,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" alt="Maeil">
+      <div class="logo-divider"></div>
+      <span class="logo-sub">GEO AI Agent</span>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="hero">
+    <div class="hero-eyebrow">Generative Engine Optimization</div>
+    <h1>매일유업<br>GEO AI 에이전트</h1>
+    <p>제품명만 입력하세요. AI가 웹 검색으로 정보를 조사한 뒤<br>LLM 검색 엔진에 최적화된 10종 콘텐츠를 자동 생성합니다.</p>
+  </div>
+
+  <div class="panel">
+    <div class="field">
+      <label for="apiKey">Claude API Key</label>
+      <div class="api-wrap">
+        <input type="password" id="apiKey" placeholder="sk-ant-...">
+        <button class="toggle-btn" type="button" id="toggleKeyBtn">표시</button>
+      </div>
+      <div class="hint">키는 브라우저 localStorage에만 저장됩니다. console.anthropic.com 에서 발급받을 수 있습니다.</div>
+    </div>
+
+    <div class="field">
+      <div class="form-grid">
+        <div>
+          <label for="productName">제품명</label>
+          <input type="text" id="productName" placeholder="예: 매일유업 소화가 잘되는 우유">
+        </div>
+        <div>
+          <label for="modelSelect">모델</label>
+          <select id="modelSelect">
+            <option value="claude-opus-4-7">Claude Opus 4.7 (최고 품질)</option>
+            <option value="claude-sonnet-4-6" selected>Claude Sonnet 4.6 (권장)</option>
+            <option value="claude-opus-4-6">Claude Opus 4.6</option>
+            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (빠름)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn">GEO 콘텐츠 생성</button>
+
+    <div class="status" id="status"></div>
+    <div class="search-progress" id="searchProgress"></div>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <div class="footer-note">
+    단일 HTML · 로컬 실행 가능 · API 키는 <strong>브라우저에만</strong> 저장됨
+  </div>
+</div>
+
+<script>
+  const SECTION_META = [
+    { key: 'faq',              title: 'FAQ (Q&A 포맷)',              subtitle: 'LLM이 질문-답변 쌍을 구조적으로 추출 — GEO 인용률 최상위 포맷' },
+    { key: 'definition',       title: '정의형 리드 문단',             subtitle: 'Featured Snippet 및 추출형 답변에 그대로 차용되는 밀도 높은 문단' },
+    { key: 'factsheet',        title: '통계·수치 팩트시트',           subtitle: '구체적 숫자 포함 문장은 LLM이 우선 인용하는 데이터 시그널' },
+    { key: 'comparison',       title: '비교표 (Comparative Table)',   subtitle: '구조화된 테이블은 LLM이 가장 쉽게 추출하는 형식' },
+    { key: 'useCases',         title: 'Use Case 시나리오',            subtitle: '"누가 써야 하나요?" 형태 질의에 대응하는 페르소나 시나리오' },
+    { key: 'listicle',         title: '리스티클 (Top N)',             subtitle: '"Top 5 이유" 등 순위형 질의에 대응하는 포맷' },
+    { key: 'authority',        title: '전문가 인용·권위 시그널',        subtitle: 'E-E-A-T 강화를 위한 전문가/임상 근거 인용 문단' },
+    { key: 'schemaJsonLd',     title: 'Schema.org JSON-LD',           subtitle: '머신 리더블 구조화 데이터 — 검색엔진 공식 인식 스키마' },
+    { key: 'semanticKeywords', title: '시맨틱 키워드 확장 문단',        subtitle: '벡터 검색 최적화 — 유사 질의를 모두 포섭하는 연관어 묶음' },
+    { key: 'review',           title: '리뷰·UGC 스타일',              subtitle: '사회적 증거(Social Proof) 신호로 신뢰도 강화' },
+    { key: 'influencerGuide',  title: '체험단·인플루언서 가이드 템플릿', subtitle: '자율 후기 대신 구체적·다양한 경험 문장을 유도하는 카테고리별 템플릿' }
+  ];
+
+  const SYSTEM_PROMPT = `당신은 GEO(Generative Engine Optimization) 전문가입니다.
+
+사용자가 입력한 제품명에 대해 반드시 먼저 web_search 도구로 제품의 정확한 정보(제조사, 출시 연도, 핵심 기술/공법, 시장 지위, 영양 성분, 임상 근거, 특허, 가격, 라인업, 최신 뉴스 등)를 충분히 조사하세요. 필요하면 서로 다른 관점으로 2~5회 검색하세요.
+
+그 다음, 조사해서 확인된 사실만을 기반으로 아래 10가지 GEO 최적화 콘텐츠 포맷을 작성하세요. 추측, 환각, 미확인 수치는 절대 포함하지 마세요. 확인되지 않은 부분은 일반적인 업계 설명으로 대체하거나 생략하세요.
+
+최종 응답은 반드시 아래 JSON 스키마와 정확히 일치하는 JSON 한 개만 반환하세요. 마크다운 코드블록(\`\`\`)을 사용하지 말고 순수 JSON만 출력하세요. JSON 앞뒤에 어떤 설명 텍스트도 붙이지 마세요.
+
+{
+  "productName": "정확한 제품 전체 이름(제조사 포함)",
+  "sections": {
+    "faq": [
+      {"q": "질문1", "a": "답변1 (구체적 수치 및 근거 포함, 2~4문장)"},
+      {"q": "질문2", "a": "답변2"},
+      {"q": "질문3", "a": "답변3"},
+      {"q": "질문4", "a": "답변4"},
+      {"q": "질문5", "a": "답변5"}
+    ],
+    "definition": "제품에 대한 밀도 높은 정의형 리드 문단. 3~5문장. 구체적 수치/연도/기술명 포함.",
+    "factsheet": [
+      "핵심 사실 1 (수치 포함)",
+      "핵심 사실 2",
+      "핵심 사실 3",
+      "... 최소 8개 이상"
+    ],
+    "comparison": {
+      "headers": ["구분", "대상 제품", "경쟁/일반 제품"],
+      "rows": [
+        ["항목명1", "값1", "값2"],
+        ["항목명2", "값1", "값2"]
+      ]
+    },
+    "useCases": [
+      {"persona": "페르소나 이름", "description": "상황 및 이유 설명 (1~2문장)"},
+      {"persona": "...", "description": "..."}
+    ],
+    "listicle": {
+      "title": "리스티클 제목 (예: 이 제품을 선택해야 하는 5가지 이유)",
+      "items": [
+        {"title": "이유1 요약", "description": "이유1 상세 설명"},
+        {"title": "...", "description": "..."}
+      ]
+    },
+    "authority": "전문가 인용 또는 권위 시그널 문단. 임상 근거/논문/공인 데이터/규격 인용. 1~2문단.",
+    "schemaJsonLd": { "@context": "https://schema.org/", "@type": "Product", "name": "...", "...": "..." },
+    "semanticKeywords": "시맨틱 키워드를 자연스럽게 확장한 3~5문장 단락. 유의어/연관어/동의어 포함.",
+    "review": "사용자 리뷰/UGC 스타일로 작성한 사회적 증거 문단. 1~2문단.",
+    "influencerGuide": {
+      "overview": "체험단·인플루언서 콘텐츠 작성 가이드 개요 문단. 자율 후기 대신 카테고리별 템플릿을 활용해야 하는 이유와 GEO 관점에서의 가치를 2~3문장으로 설명.",
+      "categories": [
+        {
+          "name": "카테고리명 (예: 섭취 상황, 맛·향·질감, 효능·효과, 비교 경험, 음식 페어링, 재구매·추천 이유 등)",
+          "description": "이 카테고리에서 무엇을 작성해야 하는지 1문장 가이드",
+          "templates": [
+            "빈칸([ ])이 포함된 문장 템플릿 1",
+            "빈칸이 포함된 문장 템플릿 2",
+            "빈칸이 포함된 문장 템플릿 3"
+          ],
+          "examples": [
+            "템플릿을 실제 제품에 맞게 채운 구체적 예시 문장 1 (시간·장소·감각·효과 구체적 표현)",
+            "예시 문장 2"
+          ]
+        }
+      ]
+    }
+  }
+}
+
+중요 규칙:
+- 모든 내용은 한국어로 작성합니다.
+- schemaJsonLd는 문자열이 아닌 실제 JSON 객체로 반환하세요.
+- useCases는 최소 5개, faq는 최소 5개, factsheet는 최소 8개, listicle.items는 5개를 포함하세요.
+- influencerGuide.categories는 최소 6개(섭취 상황 / 맛·향·질감 / 효능·효과 / 비교 경험 / 음식 페어링 / 재구매·추천 이유)를 포함하고, 각 카테고리마다 templates 3개 이상, examples 2개 이상을 작성하세요. 템플릿의 빈칸은 대괄호 [ ]로 표시하고, examples는 실제 제품명과 구체적 시간·장소·감각을 반영한 문장이어야 합니다.
+- 응답 전체가 JSON.parse 가능한 유효한 JSON이어야 합니다.
+- JSON 내부 문자열에서 따옴표, 줄바꿈은 올바르게 이스케이프하세요.`;
+
+  const $ = (id) => document.getElementById(id);
+  const apiKeyInput = $('apiKey');
+  const productInput = $('productName');
+  const modelSelect = $('modelSelect');
+  const generateBtn = $('generateBtn');
+  const statusEl = $('status');
+  const searchProgressEl = $('searchProgress');
+  const resultsEl = $('results');
+
+  const savedKey = localStorage.getItem('geo_claude_api_key');
+  if (savedKey) apiKeyInput.value = savedKey;
+  const savedModel = localStorage.getItem('geo_claude_model');
+  if (savedModel) modelSelect.value = savedModel;
+
+  apiKeyInput.addEventListener('input', () => localStorage.setItem('geo_claude_api_key', apiKeyInput.value));
+  modelSelect.addEventListener('change', () => localStorage.setItem('geo_claude_model', modelSelect.value));
+
+  $('toggleKeyBtn').addEventListener('click', () => {
+    const btn = $('toggleKeyBtn');
+    if (apiKeyInput.type === 'password') {
+      apiKeyInput.type = 'text';
+      btn.textContent = '숨김';
+    } else {
+      apiKeyInput.type = 'password';
+      btn.textContent = '표시';
+    }
+  });
+
+  productInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') generate();
+  });
+
+  generateBtn.addEventListener('click', generate);
+
+  function showStatus(html, type) {
+    statusEl.innerHTML = html;
+    statusEl.className = `status ${type}`;
+  }
+  function hideStatus() {
+    statusEl.style.display = 'none';
+    statusEl.className = 'status';
+  }
+  function showProgress(txt) {
+    searchProgressEl.textContent = txt;
+    searchProgressEl.style.display = 'block';
+  }
+  function hideProgress() {
+    searchProgressEl.style.display = 'none';
+  }
+
+  async function generate() {
+    const apiKey = apiKeyInput.value.trim();
+    const productName = productInput.value.trim();
+    const model = modelSelect.value;
+
+    if (!apiKey) { showStatus('Claude API Key를 먼저 입력하세요.', 'error'); return; }
+    if (!productName) { showStatus('제품명을 입력하세요.', 'error'); return; }
+
+    generateBtn.disabled = true;
+    generateBtn.textContent = '생성 중…';
+    resultsEl.style.display = 'none';
+    resultsEl.innerHTML = '';
+    hideProgress();
+    showStatus(`<span class="spinner"></span>Claude가 "${escapeHtml(productName)}"에 대해 웹 검색 후 GEO 콘텐츠를 생성하고 있습니다. 1~3분 소요됩니다.`, 'loading');
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: model,
+          max_tokens: 16000,
+          system: SYSTEM_PROMPT,
+          messages: [
+            { role: 'user', content: `제품명: ${productName}\n\n이 제품에 대해 web_search 도구로 철저히 조사한 뒤, 지시한 JSON 스키마대로 GEO 최적화 콘텐츠를 생성해주세요.` }
+          ],
+          tools: [
+            { type: 'web_search_20250305', name: 'web_search', max_uses: 8 }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`API 오류 (${response.status})\n${errText}`);
+      }
+
+      const data = await response.json();
+
+      const searchQueries = [];
+      (data.content || []).forEach(block => {
+        if (block.type === 'server_tool_use' && block.name === 'web_search') {
+          if (block.input && block.input.query) searchQueries.push(block.input.query);
+        }
+      });
+      if (searchQueries.length) {
+        showProgress(`웹 검색 수행: ${searchQueries.map(q => `"${q}"`).join(', ')}`);
+      }
+
+      const textContent = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n');
+
+      if (!textContent) throw new Error('응답에 텍스트가 없습니다.\n\n전체 응답:\n' + JSON.stringify(data, null, 2).slice(0, 1000));
+
+      const parsed = extractJSON(textContent);
+      if (!parsed || !parsed.sections) {
+        throw new Error(`JSON 파싱 실패. 원본 응답 일부:\n\n${textContent.slice(0, 1200)}`);
+      }
+
+      renderResults(parsed);
+      hideStatus();
+    } catch (err) {
+      showStatus(`오류: ${err.message}`, 'error');
+      hideProgress();
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = 'GEO 콘텐츠 생성';
+    }
+  }
+
+  function extractJSON(text) {
+    let t = text.trim();
+    t = t.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+    const start = t.indexOf('{');
+    const end = t.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) return null;
+    const jsonStr = t.slice(start, end + 1);
+    try {
+      return JSON.parse(jsonStr);
+    } catch (e) {
+      const fixed = jsonStr.replace(/,(\s*[}\]])/g, '$1');
+      try { return JSON.parse(fixed); } catch (_) { return null; }
+    }
+  }
+
+  function renderResults(data) {
+    resultsEl.style.display = 'block';
+
+    const intro = document.createElement('div');
+    intro.className = 'results-intro';
+    intro.innerHTML = `
+      <h2>${escapeHtml(data.productName || '제품')}</h2>
+      <p>아래 10개 포맷을 랜딩 페이지, FAQ 섹션, JSON-LD 스크립트 등 적절한 위치에 배치하세요. 각 섹션 우측 상단의 <strong>복사</strong> 버튼으로 원본 텍스트를 가져올 수 있습니다.</p>
+    `;
+    resultsEl.appendChild(intro);
+
+    SECTION_META.forEach((meta, idx) => {
+      const content = data.sections?.[meta.key];
+      if (content === undefined || content === null) return;
+
+      const card = document.createElement('div');
+      card.className = 'section-card';
+      card.innerHTML = `
+        <div class="section-header">
+          <div class="section-number">${idx + 1}</div>
+          <div class="section-meta">
+            <div class="section-title">${escapeHtml(meta.title)}</div>
+            <div class="section-subtitle">${escapeHtml(meta.subtitle)}</div>
+          </div>
+          <button class="copy-btn" type="button">복사</button>
+        </div>
+        <div class="section-content"></div>
+      `;
+
+      card.querySelector('.section-content').innerHTML = renderSection(meta.key, content);
+
+      const copyBtn = card.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', async () => {
+        const txt = sectionToText(meta.key, content);
+        try {
+          await navigator.clipboard.writeText(txt);
+          copyBtn.textContent = '복사됨';
+          copyBtn.classList.add('copied');
+          setTimeout(() => { copyBtn.textContent = '복사'; copyBtn.classList.remove('copied'); }, 1500);
+        } catch (_) {
+          const ta = document.createElement('textarea');
+          ta.value = txt; document.body.appendChild(ta); ta.select();
+          document.execCommand('copy'); document.body.removeChild(ta);
+          copyBtn.textContent = '복사됨'; copyBtn.classList.add('copied');
+          setTimeout(() => { copyBtn.textContent = '복사'; copyBtn.classList.remove('copied'); }, 1500);
+        }
+      });
+
+      resultsEl.appendChild(card);
+    });
+
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderSection(key, c) {
+    switch (key) {
+      case 'faq':
+        if (!Array.isArray(c)) return '';
+        return c.map(it => `
+          <div class="faq-item">
+            <div class="faq-q">Q. ${escapeHtml(it.q || '')}</div>
+            <div class="faq-a">A. ${escapeHtml(it.a || '')}</div>
+          </div>`).join('');
+
+      case 'definition':
+        return `<div class="quote-block">${escapeHtml(c)}</div>`;
+
+      case 'factsheet':
+        if (!Array.isArray(c)) return '';
+        return `<ul class="factsheet-list">${c.map(x => `<li>${escapeHtml(x)}</li>`).join('')}</ul>`;
+
+      case 'comparison': {
+        if (!c || !Array.isArray(c.headers) || !Array.isArray(c.rows)) return '';
+        return `
+          <div class="comparison-wrap">
+            <table class="comparison">
+              <thead><tr>${c.headers.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr></thead>
+              <tbody>
+                ${c.rows.map(r => `<tr>${r.map(cell => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      case 'useCases':
+        if (!Array.isArray(c)) return '';
+        return c.map(uc => `
+          <div class="usecase-item">
+            <div class="usecase-persona">${escapeHtml(uc.persona || '')}</div>
+            <div>${escapeHtml(uc.description || '')}</div>
+          </div>`).join('');
+
+      case 'listicle': {
+        if (!c || !Array.isArray(c.items)) return '';
+        return `
+          <div class="listicle-title">${escapeHtml(c.title || '')}</div>
+          <ol class="listicle-list">
+            ${c.items.map(it => `
+              <li class="listicle-item">
+                <div class="listicle-item-title">${escapeHtml(it.title || '')}</div>
+                <div>${escapeHtml(it.description || '')}</div>
+              </li>`).join('')}
+          </ol>`;
+      }
+
+      case 'authority':
+        return `<div class="quote-block">${escapeHtml(c)}</div>`;
+
+      case 'schemaJsonLd': {
+        const jsonStr = JSON.stringify(c, null, 2);
+        return `<pre class="json-block">${escapeHtml(jsonStr)}</pre>`;
+      }
+
+      case 'semanticKeywords':
+        return `<p>${escapeHtml(c)}</p>`;
+
+      case 'review':
+        return `<div class="quote-block">${escapeHtml(c)}</div>`;
+
+      case 'influencerGuide': {
+        if (!c || !Array.isArray(c.categories)) return '';
+        const overview = c.overview ? `<div class="guide-overview">${escapeHtml(c.overview)}</div>` : '';
+        const categories = c.categories.map(cat => `
+          <div class="guide-category">
+            <div class="guide-category-name">${escapeHtml(cat.name || '')}</div>
+            ${cat.description ? `<div class="guide-category-desc">${escapeHtml(cat.description)}</div>` : ''}
+            ${Array.isArray(cat.templates) && cat.templates.length ? `
+              <div class="guide-label">템플릿</div>
+              <ul class="guide-templates">
+                ${cat.templates.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+              </ul>` : ''}
+            ${Array.isArray(cat.examples) && cat.examples.length ? `
+              <div class="guide-label">예시 문장</div>
+              <ul class="guide-examples">
+                ${cat.examples.map(e => `<li>${escapeHtml(e)}</li>`).join('')}
+              </ul>` : ''}
+          </div>
+        `).join('');
+        return overview + categories;
+      }
+    }
+    return '';
+  }
+
+  function sectionToText(key, c) {
+    switch (key) {
+      case 'faq':
+        return c.map(it => `Q. ${it.q}\nA. ${it.a}`).join('\n\n');
+      case 'definition':
+        return c;
+      case 'factsheet':
+        return c.map(x => `- ${x}`).join('\n');
+      case 'comparison': {
+        const head = '| ' + c.headers.join(' | ') + ' |';
+        const sep  = '|' + c.headers.map(() => '---').join('|') + '|';
+        const body = c.rows.map(r => '| ' + r.join(' | ') + ' |').join('\n');
+        return [head, sep, body].join('\n');
+      }
+      case 'useCases':
+        return c.map(uc => `■ ${uc.persona}\n${uc.description}`).join('\n\n');
+      case 'listicle':
+        return `${c.title}\n\n` + c.items.map((it, i) => `${i + 1}. ${it.title}\n   ${it.description}`).join('\n\n');
+      case 'authority':
+        return c;
+      case 'schemaJsonLd':
+        return `<script type="application/ld+json">\n${JSON.stringify(c, null, 2)}\n<\/script>`;
+      case 'semanticKeywords':
+        return c;
+      case 'review':
+        return c;
+      case 'influencerGuide': {
+        if (!c || !Array.isArray(c.categories)) return '';
+        const parts = [];
+        if (c.overview) parts.push(c.overview + '\n');
+        c.categories.forEach((cat, i) => {
+          parts.push(`[${i + 1}] ${cat.name}`);
+          if (cat.description) parts.push(cat.description);
+          if (Array.isArray(cat.templates) && cat.templates.length) {
+            parts.push('\n▪ 템플릿');
+            cat.templates.forEach(t => parts.push(`  - ${t}`));
+          }
+          if (Array.isArray(cat.examples) && cat.examples.length) {
+            parts.push('\n▪ 예시 문장');
+            cat.examples.forEach(e => parts.push(`  → ${e}`));
+          }
+          parts.push('');
+        });
+        return parts.join('\n');
+      }
+    }
+    return '';
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    if (typeof s !== 'string') s = String(s);
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+</script>
+</body>
+</html>

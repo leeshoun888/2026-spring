@@ -1,0 +1,3073 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>매일유업 고객 VOC 자산화 에이전트 v4</title>
+
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+
+<style>
+  /* ================================================================
+     매일유업 블루 디자인 시스템
+     ================================================================ */
+  :root {
+    /* Brand blue (matches logo) */
+    --maeil: #00448B;
+    --maeil-900: #001E3E;
+    --maeil-800: #002F5F;
+    --maeil-700: #00448B;
+    --maeil-600: #1A5A9F;
+    --maeil-500: #3B78BE;
+    --maeil-400: #6B9DD0;
+    --maeil-300: #A4C2E2;
+    --maeil-200: #D4E3F1;
+    --maeil-100: #EBF2F9;
+    --maeil-50:  #F5F9FC;
+    --maeil-alpha-8:  rgba(0, 68, 139, 0.08);
+    --maeil-alpha-12: rgba(0, 68, 139, 0.12);
+
+    /* Surfaces */
+    --white: #FFFFFF;
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --surface-alt: #FAFBFC;
+    --border: #D2DAE3;
+    --border-light: #E8EDF3;
+    --border-blue: #C4D5E6;
+
+    /* Text */
+    --text: #0A1F3D;
+    --text-secondary: #4A5568;
+    --text-tertiary: #8B95A7;
+
+    /* Semantic (muted, blue-biased) */
+    --positive: #1F6B4C;
+    --positive-bg: #E8F2EC;
+    --neutral:  #6B7689;
+    --neutral-bg: #EEF1F5;
+    --negative: #A8342A;
+    --negative-bg: #F9EAE8;
+    --high: var(--negative);
+    --high-bg: var(--negative-bg);
+    --medium: #9A6B1E;
+    --medium-bg: #F5EDDE;
+    --low: var(--neutral);
+    --low-bg: var(--neutral-bg);
+
+    /* Radii & shadows */
+    --r-sm: 8px; --r: 12px; --r-lg: 18px; --r-xl: 24px;
+    --s-sm: 0 1px 2px rgba(10,31,61,0.04);
+    --s:    0 2px 12px rgba(10,31,61,0.06);
+    --s-lg: 0 8px 32px rgba(10,31,61,0.08);
+    --s-blue: 0 8px 28px rgba(0,68,139,0.14);
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+                 'SF Pro Display', 'Inter', sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.015em;
+    line-height: 1.5;
+  }
+
+  button, input, textarea { font-family: inherit; letter-spacing: inherit; }
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', ui-monospace, Menlo, monospace; }
+
+  /* ================================================================
+     Header
+     ================================================================ */
+  .site-header {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid var(--border-light);
+    padding: 18px 24px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .site-header-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .logo-img {
+    height: 34px; width: auto; display: block;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+  }
+  .logo-divider { width: 1px; height: 28px; background: var(--border); }
+  .app-identity { min-width: 0; flex: 1; }
+  .app-name {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .app-name-sub {
+    font-size: 11.5px; color: var(--text-tertiary);
+    font-family: 'Inter', sans-serif; font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .version-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 600;
+    background: var(--maeil-100); color: var(--maeil);
+    padding: 3px 8px; border-radius: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  /* ================================================================
+     Layout
+     ================================================================ */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 32px 24px 80px;
+  }
+
+  /* ================================================================
+     Hero / Input
+     ================================================================ */
+  #inputSection { animation: fadeIn 0.4s var(--ease); }
+
+  .hero {
+    text-align: center;
+    padding: 40px 0 36px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 11.5px; font-weight: 600;
+    color: var(--maeil);
+    background: var(--maeil-100);
+    padding: 5px 12px;
+    border-radius: 980px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+    margin-bottom: 20px;
+  }
+  .hero-title {
+    font-size: clamp(32px, 5vw, 46px);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.12;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  .hero-subtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .input-card {
+    max-width: 680px;
+    margin: 0 auto;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-xl);
+    padding: 28px;
+    box-shadow: var(--s);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .field-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    letter-spacing: -0.005em;
+  }
+  .field-hint {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 400;
+    margin-left: 6px;
+  }
+  .text-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r);
+    font-size: 15px;
+    color: var(--text);
+    transition: all 0.2s var(--ease);
+  }
+  .text-input:focus {
+    outline: none;
+    border-color: var(--maeil);
+    background: var(--white);
+    box-shadow: 0 0 0 3px var(--maeil-alpha-8);
+  }
+  .text-input::placeholder { color: var(--text-tertiary); }
+
+  .btn-primary {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 15px; font-weight: 600;
+    color: var(--white);
+    background: var(--maeil);
+    border: none;
+    border-radius: var(--r);
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+    letter-spacing: -0.005em;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--maeil-800);
+    transform: translateY(-1px);
+    box-shadow: var(--s-blue);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-secondary {
+    padding: 10px 18px;
+    font-size: 13px; font-weight: 500;
+    color: var(--maeil);
+    background: var(--maeil-100);
+    border: 1px solid transparent;
+    border-radius: 980px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+  }
+  .btn-secondary:hover {
+    background: var(--maeil-200);
+  }
+
+  .btn-ghost {
+    padding: 9px 16px;
+    font-size: 13px; font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 980px;
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+  }
+  .btn-ghost:hover {
+    background: var(--surface-alt);
+    border-color: var(--maeil);
+    color: var(--maeil);
+  }
+
+  .api-details {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-light);
+  }
+  .api-details summary {
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px 0;
+    user-select: none;
+    font-weight: 500;
+    list-style: none;
+  }
+  .api-details summary::-webkit-details-marker { display: none; }
+  .api-details summary::before {
+    content: '▸';
+    color: var(--text-tertiary);
+    margin-right: 8px;
+    font-size: 10px;
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .api-details[open] summary::before { transform: rotate(90deg); }
+  .api-details > div { padding-top: 10px; }
+
+  .example-chips {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .example-chip {
+    padding: 7px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 980px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s var(--ease);
+  }
+  .example-chip:hover {
+    background: var(--maeil-100);
+    color: var(--maeil);
+    border-color: var(--maeil-200);
+  }
+
+  .error-card {
+    background: var(--negative-bg);
+    border: 1px solid #F0C5C0;
+    border-radius: var(--r);
+    padding: 16px 20px;
+    margin-top: 16px;
+    color: var(--negative);
+    font-size: 13.5px;
+    line-height: 1.55;
+    display: none;
+  }
+  .error-card.show { display: block; }
+
+  /* Design principle callout — before results */
+  .design-principle {
+    max-width: 680px;
+    margin: 28px auto 0;
+    background: var(--maeil-50);
+    border: 1px solid var(--maeil-200);
+    border-radius: var(--r);
+    padding: 18px 22px;
+    display: flex;
+    gap: 14px;
+  }
+  .dp-icon {
+    width: 32px; height: 32px;
+    background: var(--maeil);
+    color: white;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+    font-family: 'Inter', sans-serif;
+  }
+  .dp-title {
+    font-size: 13px; font-weight: 700; color: var(--text);
+    margin-bottom: 4px;
+  }
+  .dp-desc {
+    font-size: 12.5px; color: var(--text-secondary);
+    line-height: 1.55;
+  }
+
+  /* ================================================================
+     Loading
+     ================================================================ */
+  .loading-state {
+    display: none;
+    text-align: center;
+    padding: 80px 24px;
+    animation: fadeIn 0.3s var(--ease);
+  }
+  .loading-state.show { display: block; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border-light);
+    border-top-color: var(--maeil);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 22px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title {
+    font-size: 20px; font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .loading-sub {
+    color: var(--text-secondary);
+    font-size: 14px;
+    max-width: 480px; margin: 0 auto 28px;
+  }
+  .loading-steps {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r);
+    padding: 20px 28px;
+    min-width: 340px;
+  }
+  .loading-step {
+    display: flex; align-items: center; gap: 12px;
+    color: var(--text-tertiary);
+    opacity: 0.5;
+    transition: all 0.3s;
+    font-weight: 500;
+  }
+  .loading-step.active { opacity: 1; color: var(--text); }
+  .loading-step.done { opacity: 0.75; color: var(--maeil); }
+  .loading-step-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: currentColor;
+  }
+  .loading-step.active .loading-step-dot {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.6; }
+  }
+
+  /* ================================================================
+     Results — shared
+     ================================================================ */
+  .results { display: none; }
+  .results.show { display: block; }
+
+  .section { margin-bottom: 40px; animation: fadeInUp 0.5s var(--ease) both; }
+  .section:nth-child(1) { animation-delay: 0.05s; }
+  .section:nth-child(2) { animation-delay: 0.10s; }
+  .section:nth-child(3) { animation-delay: 0.15s; }
+  .section:nth-child(4) { animation-delay: 0.20s; }
+  .section:nth-child(5) { animation-delay: 0.25s; }
+  .section:nth-child(6) { animation-delay: 0.30s; }
+  .section:nth-child(7) { animation-delay: 0.35s; }
+  .section:nth-child(8) { animation-delay: 0.40s; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 20px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-light);
+    gap: 16px;
+  }
+  .section-header-left {
+    display: flex; align-items: baseline; gap: 12px;
+    flex-wrap: wrap;
+  }
+  .section-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; font-weight: 600;
+    color: var(--maeil);
+    background: var(--maeil-100);
+    padding: 3px 9px;
+    border-radius: 6px;
+    letter-spacing: 0.04em;
+  }
+  .section-title {
+    font-size: 20px; font-weight: 700;
+    letter-spacing: -0.025em; color: var(--text);
+  }
+  .section-subtitle {
+    font-size: 13px; color: var(--text-tertiary);
+    font-weight: 500;
+  }
+
+
+  /* ================================================================
+     Meta card (exec summary)
+     ================================================================ */
+  .meta-card {
+    background: linear-gradient(135deg, var(--maeil-800) 0%, var(--maeil) 60%, var(--maeil-600) 100%);
+    color: var(--white);
+    border-radius: var(--r-xl);
+    padding: 40px 44px 32px;
+    margin-bottom: 32px;
+    position: relative; overflow: hidden;
+    box-shadow: var(--s-blue);
+  }
+  .meta-card::before {
+    content: ''; position: absolute;
+    top: -120px; right: -100px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle, rgba(255,255,255,0.12), transparent 70%);
+    border-radius: 50%;
+  }
+
+  .meta-card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 18px; gap: 20px;
+    position: relative;
+  }
+  .meta-card-header-left { min-width: 0; flex: 1; }
+  .meta-card-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.2);
+    padding: 6px 12px; border-radius: 980px;
+    color: rgba(255,255,255,0.95);
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+  }
+  .meta-card-badge-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #7FD4A1;
+    box-shadow: 0 0 8px rgba(127,212,161,0.8);
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .meta-card-eyebrow {
+    font-size: 12px; font-weight: 600;
+    opacity: 0.8; letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    font-family: 'Inter', sans-serif;
+  }
+  .meta-card-title {
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 700; letter-spacing: -0.03em;
+    line-height: 1.12;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .meta-card-sub {
+    font-size: 13.5px; opacity: 0.78;
+    margin-bottom: 30px;
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+  .meta-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 24px;
+    position: relative;
+  }
+  .meta-stat { padding: 0 20px; border-right: 1px solid rgba(255,255,255,0.12); }
+  .meta-stat:first-child { padding-left: 0; }
+  .meta-stat:last-child { border-right: none; padding-right: 0; }
+  .meta-stat-label {
+    font-size: 10.5px; opacity: 0.7;
+    margin-bottom: 10px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+  }
+  .meta-stat-value {
+    font-size: 28px; font-weight: 700;
+    letter-spacing: -0.025em;
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+  .meta-stat-unit {
+    font-size: 14px; opacity: 0.6;
+    font-weight: 500; margin-left: 3px;
+  }
+
+  @media (max-width: 680px) {
+    .meta-card { padding: 30px 24px; }
+    .meta-card-header { flex-direction: column; }
+    .meta-stats {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px 0;
+    }
+    .meta-stat { padding: 0 14px; }
+    .meta-stat:nth-child(2n) { border-right: none; }
+    .meta-stat:nth-child(-n+2) { padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.12); }
+    .meta-stat:nth-child(n+3) { padding-top: 20px; }
+  }
+
+  /* ================================================================
+     Data Provenance (CRITICAL — transparency panel)
+     ================================================================ */
+  .provenance-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-left: 4px solid var(--maeil);
+    border-radius: var(--r);
+    padding: 24px 28px;
+    margin-bottom: 32px;
+  }
+  .provenance-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .provenance-icon {
+    width: 28px; height: 28px;
+    background: var(--maeil-100); color: var(--maeil);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .provenance-title {
+    font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .provenance-subtitle {
+    font-size: 12px; color: var(--text-tertiary);
+    margin-left: auto;
+  }
+  .provenance-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 22px;
+  }
+  @media (max-width: 720px) { .provenance-grid { grid-template-columns: 1fr; } }
+  .prov-block h4 {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 10px;
+    font-family: 'Inter', sans-serif;
+  }
+  .prov-query-list {
+    list-style: none;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .prov-query-item {
+    font-size: 12.5px;
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface-alt);
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-secondary);
+  }
+  .prov-query-phase {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .prov-query-phase.positive  { background: var(--positive-bg); color: var(--positive); }
+  .prov-query-phase.negative  { background: var(--negative-bg); color: var(--negative); }
+  .prov-query-phase.community { background: var(--maeil-100); color: var(--maeil); }
+  .prov-query-phase.youtube   { background: var(--medium-bg); color: var(--medium); }
+  .prov-query-text { flex: 1; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prov-query-count {
+    font-size: 10.5px;
+    background: var(--maeil-100); color: var(--maeil);
+    padding: 2px 7px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .prov-domain-list {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .prov-domain {
+    font-size: 11.5px;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .prov-domain-count {
+    font-size: 10px;
+    background: var(--maeil-100); color: var(--maeil);
+    padding: 1px 6px; border-radius: 3px;
+    font-weight: 600;
+  }
+  .prov-excluded {
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .prov-exclude-chip {
+    font-size: 11.5px;
+    background: var(--neutral-bg); color: var(--text-secondary);
+    padding: 4px 10px; border-radius: 980px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .prov-exclude-chip::before {
+    content: '✕'; color: var(--text-tertiary); font-weight: 700; font-size: 10px;
+  }
+  .prov-method {
+    font-size: 12.5px; line-height: 1.6;
+    color: var(--text-secondary);
+    padding: 12px 14px;
+    background: var(--maeil-50);
+    border-radius: 8px;
+    border-left: 3px solid var(--maeil-300);
+  }
+
+  /* ================================================================
+     Main result tabs
+     ================================================================ */
+  .main-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 28px;
+    padding: 4px;
+    background: var(--surface-alt);
+    border-radius: var(--r);
+    border: 1px solid var(--border-light);
+    width: fit-content;
+  }
+  .main-tab {
+    padding: 10px 20px;
+    font-size: 13.5px; font-weight: 600;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s var(--ease);
+    letter-spacing: -0.005em;
+  }
+  .main-tab:hover { color: var(--maeil); }
+  .main-tab.active {
+    background: var(--maeil);
+    color: white;
+    box-shadow: var(--s-sm);
+  }
+  .main-tab-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    opacity: 0.75;
+    margin-left: 6px;
+  }
+
+  .tab-panel { display: none; animation: fadeIn 0.3s var(--ease); }
+  .tab-panel.active { display: block; }
+
+  /* ================================================================
+     Sentiment bar
+     ================================================================ */
+  .sentiment-row {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-lg);
+    padding: 26px 30px;
+    box-shadow: var(--s-sm);
+  }
+  .sentiment-bar {
+    display: flex;
+    height: 10px;
+    border-radius: 980px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    background: var(--border-light);
+    gap: 2px;
+  }
+  .sentiment-segment { transition: all 0.4s var(--ease); }
+  .sentiment-legend {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--border-light);
+    padding-top: 18px;
+  }
+  @media (max-width: 680px) { .sentiment-legend { grid-template-columns: 1fr; gap: 12px; } }
+  .legend-item {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 0 20px;
+    border-right: 1px solid var(--border-light);
+  }
+  .legend-item:first-child { padding-left: 0; }
+  .legend-item:last-child { border-right: none; padding-right: 0; }
+  @media (max-width: 680px) { .legend-item { border-right: none; padding: 0; } }
+  .legend-header { display: flex; align-items: center; gap: 7px; }
+  .legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+  .legend-label {
+    font-size: 11px; font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .legend-value {
+    font-size: 22px; font-weight: 700;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em; line-height: 1;
+  }
+  .legend-percent {
+    font-size: 12.5px; color: var(--text-tertiary);
+    font-weight: 500; margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ================================================================
+     Charts
+     ================================================================ */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-lg);
+    padding: 24px 28px;
+    box-shadow: var(--s-sm);
+  }
+  .chart-card-title {
+    font-size: 14px; font-weight: 700;
+    margin-bottom: 3px;
+    letter-spacing: -0.01em;
+  }
+  .chart-card-sub {
+    font-size: 12px; color: var(--text-tertiary);
+    margin-bottom: 18px;
+  }
+  .chart-canvas-wrap { position: relative; height: 230px; }
+
+  /* ================================================================
+     Keywords
+     ================================================================ */
+  .keyword-cloud {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-lg);
+    padding: 26px;
+    box-shadow: var(--s-sm);
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .keyword-chip {
+    padding: 7px 13px;
+    background: var(--maeil-100);
+    color: var(--maeil);
+    border-radius: 980px;
+    font-size: 13px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: all 0.2s var(--ease);
+  }
+  .keyword-chip:hover {
+    background: var(--maeil-200);
+    transform: translateY(-1px);
+  }
+  .keyword-chip .count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    background: white;
+    color: var(--maeil);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .keyword-chip.negative {
+    background: var(--negative-bg);
+    color: var(--negative);
+  }
+  .keyword-chip.negative .count { color: var(--negative); }
+
+  /* ================================================================
+     Insights
+     ================================================================ */
+  .insights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 800px) { .insights-grid { grid-template-columns: 1fr; } }
+
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-lg);
+    padding: 26px 28px;
+    box-shadow: var(--s-sm);
+    transition: all 0.2s var(--ease);
+  }
+  .insight-card:hover {
+    border-color: var(--border-blue);
+    box-shadow: var(--s);
+  }
+  .insight-card.pain        { border-left: 3px solid var(--high); }
+  .insight-card.strength    { border-left: 3px solid var(--maeil); }
+  .insight-card.opportunity { border-left: 3px solid var(--maeil-500); }
+  .insight-card.risk        { border-left: 3px solid var(--medium); }
+
+  .insight-card-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .insight-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--maeil-100);
+    color: var(--maeil);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .insight-card-title {
+    font-size: 14px; font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .insight-card-title-sub {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--text-tertiary);
+    margin-left: auto;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .insight-list {
+    list-style: none;
+    display: flex; flex-direction: column;
+    gap: 14px;
+  }
+  .insight-item {
+    display: flex; gap: 12px;
+  }
+  .insight-rank {
+    flex-shrink: 0;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--maeil-100);
+    color: var(--maeil);
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif;
+    margin-top: 1px;
+  }
+  .insight-body { flex: 1; min-width: 0; }
+  .insight-text {
+    font-size: 13.5px; line-height: 1.55;
+    color: var(--text);
+  }
+  .insight-text strong {
+    font-weight: 700;
+    color: var(--text);
+  }
+  .insight-meta {
+    margin-top: 6px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+    font-size: 11.5px; color: var(--text-tertiary);
+    align-items: center;
+  }
+  .insight-meta a {
+    color: var(--maeil);
+    text-decoration: none;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 1px 6px;
+    background: var(--maeil-100);
+    border-radius: 4px;
+  }
+  .insight-meta a:hover { background: var(--maeil-200); }
+
+  /* ================================================================
+     Badges — unified
+     ================================================================ */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px;
+    border-radius: 980px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+  .badge.positive { background: var(--positive-bg); color: var(--positive); }
+  .badge.neutral  { background: var(--neutral-bg);  color: var(--neutral); }
+  .badge.negative { background: var(--negative-bg); color: var(--negative); }
+  .badge.high     { background: var(--high-bg);     color: var(--high); }
+  .badge.medium   { background: var(--medium-bg);   color: var(--medium); }
+  .badge.low      { background: var(--low-bg);      color: var(--text-tertiary); }
+  .badge.category { background: var(--maeil-100);   color: var(--maeil); }
+
+  /* ================================================================
+     VOC filter chips + cards
+     ================================================================ */
+  .voc-filters {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-chip {
+    padding: 7px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 980px;
+    font-size: 12.5px; font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s var(--ease);
+  }
+  .filter-chip:hover { border-color: var(--maeil); color: var(--maeil); }
+  .filter-chip.active {
+    background: var(--maeil);
+    color: white;
+    border-color: var(--maeil);
+  }
+
+  .voc-list {
+    display: flex; flex-direction: column;
+    gap: 10px;
+  }
+  .voc-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r);
+    padding: 20px 24px;
+    cursor: pointer;
+    transition: all 0.25s var(--ease);
+    box-shadow: var(--s-sm);
+  }
+  .voc-card:hover {
+    border-color: var(--maeil-300);
+    transform: translateY(-1px);
+    box-shadow: var(--s);
+  }
+  .voc-card.expanded {
+    border-color: var(--maeil);
+    box-shadow: 0 0 0 3px var(--maeil-100), var(--s);
+  }
+
+  .voc-card-head {
+    display: flex; align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .voc-card-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    color: var(--text-tertiary);
+    margin-right: 4px;
+  }
+  .voc-expand-hint {
+    margin-left: auto;
+    color: var(--maeil);
+    font-weight: 600;
+    font-size: 13px;
+    transition: transform 0.2s var(--ease);
+  }
+  .voc-card.expanded .voc-expand-hint { transform: rotate(180deg); }
+
+  .voc-quote {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 14px 18px;
+    background: var(--maeil-50);
+    border-left: 3px solid var(--maeil-300);
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 10px;
+    letter-spacing: -0.01em;
+    position: relative;
+  }
+  .voc-quote::before {
+    content: '“';
+    position: absolute;
+    top: -2px; left: 8px;
+    font-size: 28px;
+    color: var(--maeil-300);
+    font-family: serif;
+    line-height: 1;
+    opacity: 0.5;
+  }
+  .voc-quote-inner {
+    position: relative;
+    padding-left: 14px;
+  }
+
+  .voc-summary-line {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    line-height: 1.55;
+  }
+  .voc-summary-line strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .voc-meta-line {
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    display: flex; align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .voc-meta-line .repeat-flag {
+    color: var(--negative);
+    font-weight: 600;
+  }
+
+  .voc-details {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s var(--ease), margin-top 0.3s;
+    margin-top: 0;
+  }
+  .voc-card.expanded .voc-details {
+    max-height: 900px;
+    margin-top: 16px;
+  }
+  .voc-details-inner {
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-light);
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 10px 18px;
+    font-size: 12.5px;
+    line-height: 1.55;
+  }
+  .voc-detail-label {
+    color: var(--text-tertiary);
+    font-weight: 600;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: 'Inter', sans-serif;
+    padding-top: 2px;
+  }
+  .voc-detail-value { color: var(--text); word-break: break-word; }
+  .voc-detail-value.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+  }
+  .voc-insight-box {
+    grid-column: 1 / -1;
+    background: var(--maeil-50);
+    border: 1px solid var(--maeil-200);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text);
+  }
+  .voc-insight-box::before {
+    content: '💡 시사점';
+    display: block;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--maeil);
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+    font-family: 'Inter', sans-serif;
+  }
+  .voc-evidence-box {
+    grid-column: 1 / -1;
+    background: var(--surface-alt);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    font-style: italic;
+  }
+  .voc-evidence-box::before {
+    content: '✓ 1인칭 발화 판별 근거';
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+    margin-bottom: 5px;
+    font-style: normal;
+    font-family: 'Inter', sans-serif;
+  }
+
+  @media (max-width: 680px) {
+    .voc-details-inner { grid-template-columns: 1fr; gap: 3px; }
+    .voc-detail-label { margin-top: 10px; }
+  }
+
+  /* ================================================================
+     Market context (separate track)
+     ================================================================ */
+  .market-list {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .market-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-left: 3px solid var(--maeil-400);
+    border-radius: var(--r);
+    padding: 18px 22px;
+    box-shadow: var(--s-sm);
+  }
+  .market-card-head {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .market-type-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 4px;
+    background: var(--maeil-100); color: var(--maeil);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+  }
+  .market-title {
+    font-size: 14px; font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 6px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+  .market-summary {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    margin-bottom: 8px;
+  }
+  .market-relevance {
+    font-size: 11.5px;
+    color: var(--maeil);
+    padding: 8px 12px;
+    background: var(--maeil-50);
+    border-radius: 6px;
+    line-height: 1.5;
+  }
+  .market-relevance::before {
+    content: '📌 VOC 해석 관련성 · ';
+    font-weight: 700;
+  }
+  .market-meta-line {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .market-meta-line a {
+    color: var(--maeil);
+    text-decoration: none;
+    font-size: 11px;
+  }
+  .market-meta-line a:hover { text-decoration: underline; }
+  .market-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--r);
+  }
+
+  /* ================================================================
+     Data Asset Viewer (UI에 직접 JSON/CSV 표시)
+     ================================================================ */
+  .data-asset-card {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    box-shadow: var(--s-sm);
+  }
+  .data-asset-tabs {
+    display: flex;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border-light);
+    padding: 0 8px;
+    gap: 0;
+  }
+  .data-asset-tab {
+    padding: 12px 18px;
+    font-size: 12.5px; font-weight: 600;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s var(--ease);
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .data-asset-tab:hover { color: var(--maeil); }
+  .data-asset-tab.active {
+    color: var(--maeil);
+    border-bottom-color: var(--maeil);
+  }
+  .data-asset-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .data-asset-action {
+    padding: 6px 12px;
+    font-size: 11.5px; font-weight: 600;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s var(--ease);
+    font-family: 'Inter', sans-serif;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .data-asset-action:hover {
+    border-color: var(--maeil);
+    color: var(--maeil);
+    background: var(--maeil-50);
+  }
+  .data-asset-action.primary {
+    background: var(--maeil);
+    color: white;
+    border-color: var(--maeil);
+  }
+  .data-asset-action.primary:hover {
+    background: var(--maeil-800);
+    color: white;
+  }
+
+  .data-asset-viewer {
+    max-height: 460px;
+    overflow: auto;
+    background: #FAFBFC;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    padding: 20px 24px;
+  }
+  .data-asset-viewer pre {
+    white-space: pre;
+    word-wrap: normal;
+    color: var(--text);
+  }
+  .data-asset-viewer::-webkit-scrollbar { width: 10px; height: 10px; }
+  .data-asset-viewer::-webkit-scrollbar-track { background: transparent; }
+  .data-asset-viewer::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  .data-asset-viewer::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+  .data-asset-panel { display: none; }
+  .data-asset-panel.active { display: block; }
+
+  /* JSON syntax colors (Maeil palette tinted) */
+  .json-key { color: var(--maeil); font-weight: 600; }
+  .json-string { color: #1F6B4C; }
+  .json-number { color: #9A6B1E; }
+  .json-boolean { color: var(--maeil-600); font-weight: 600; }
+  .json-null { color: var(--text-tertiary); }
+  .json-punct { color: var(--text-tertiary); }
+
+  /* CSV table styling */
+  .csv-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .csv-table th {
+    position: sticky; top: 0;
+    background: var(--maeil);
+    color: white;
+    padding: 8px 10px;
+    font-weight: 600;
+    text-align: left;
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+    border-bottom: 2px solid var(--maeil-800);
+  }
+  .csv-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .csv-table tr:nth-child(even) td { background: var(--surface-alt); }
+  .csv-table tr:hover td { background: var(--maeil-50); }
+  .csv-table td.first-col { color: var(--maeil); font-weight: 600; }
+
+  /* ================================================================
+     Export bar + toast + footer
+     ================================================================ */
+  .export-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--r);
+    box-shadow: var(--s-sm);
+  }
+  .export-label {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .export-label strong {
+    color: var(--text); font-weight: 700;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 980px;
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s var(--ease);
+    z-index: 200;
+    box-shadow: var(--s-lg);
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .foot {
+    text-align: center;
+    padding: 32px 16px 0;
+    margin-top: 60px;
+    border-top: 1px solid var(--border-light);
+    color: var(--text-tertiary);
+    font-size: 11.5px;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  .muted { color: var(--text-tertiary); }
+</style>
+</head>
+
+<body>
+
+<!-- ============ Header ============ -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <img class="logo-img" id="logoImg" alt="매일유업" />
+    <div class="logo-divider"></div>
+    <div class="app-identity">
+      <div class="app-name">고객 VOC 자산화 에이전트</div>
+      <div class="app-name-sub">Voice of Customer · Data Normalization Platform</div>
+    </div>
+    <span class="version-tag mono">v4.0</span>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- ============ Input Section ============ -->
+  <section id="inputSection">
+    <div class="hero">
+      <span class="hero-eyebrow">VOC Intelligence</span>
+      <h1 class="hero-title">고객의 목소리를,<br>정직하게 자산화합니다.</h1>
+      <p class="hero-subtitle">
+        개인 블로그·커뮤니티·유튜브에서 실제 소비자 1인칭 발화만 수집하여
+        검증 가능한 VOC 데이터로 변환합니다.
+      </p>
+    </div>
+
+    <div class="input-card">
+      <div class="field">
+        <label class="field-label" for="productInput">
+          제품명<span class="field-hint">매일유업 제품명을 정확하게 입력하세요</span>
+        </label>
+        <input type="text" id="productInput" class="text-input"
+               placeholder="예: 매일 바이오 그릭요거트" autocomplete="off" />
+      </div>
+
+      <button class="btn-primary" id="analyzeBtn">VOC 분석 시작</button>
+
+      <details class="api-details" id="apiDetails">
+        <summary>API 키 설정</summary>
+        <div>
+          <input type="password" id="apiKeyInput" class="text-input"
+                 placeholder="sk-ant-..." autocomplete="off" />
+          <div style="margin-top: 10px; display: flex; align-items: center; gap: 10px;">
+            <button type="button" id="saveKeyBtn" class="btn-secondary">저장</button>
+            <span style="font-size: 11.5px; color: var(--text-tertiary); line-height: 1.5;">
+              키는 브라우저에만 저장되며 외부로 전송되지 않습니다.
+            </span>
+          </div>
+        </div>
+      </details>
+
+      <div class="error-card" id="errorCard"></div>
+    </div>
+
+    <div class="example-chips">
+      <button class="example-chip" data-example="매일 바이오 그릭요거트">매일 바이오 그릭요거트</button>
+      <button class="example-chip" data-example="바리스타룰스 에스프레소 라떼">바리스타룰스 에스프레소 라떼</button>
+      <button class="example-chip" data-example="상하목장 유기농 우유">상하목장 유기농 우유</button>
+      <button class="example-chip" data-example="앱솔루트 분유">앱솔루트 분유</button>
+    </div>
+
+    <div class="design-principle">
+      <div class="dp-icon">v4</div>
+      <div>
+        <div class="dp-title">이번 버전의 설계 원칙 — "Less but Real"</div>
+        <div class="dp-desc">
+          수량보다 <strong>진실성</strong>을 우선합니다. 네이버 블로그, 맘카페·디시·클리앙 등 커뮤니티,
+          유튜브 리뷰의 개인 1인칭 발화만 수집합니다. 쇼핑몰 리뷰(스니펫 신뢰도),
+          SNS(크롤링 불가), 뉴스(기자 발화)는 VOC에서 제외되며, 뉴스는 별도 "시장 맥락" 섹션에 분리됩니다.
+          협찬/체험단 포스팅은 자동 배제됩니다.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Loading ============ -->
+  <section class="loading-state" id="loadingSection">
+    <div class="spinner"></div>
+    <div class="loading-title">VOC 데이터 수집 중</div>
+    <div class="loading-sub" id="loadingSub">개인 블로그·커뮤니티·유튜브에서 1인칭 소비자 발화를 찾고 있습니다</div>
+    <div class="loading-steps" id="loadingSteps">
+      <div class="loading-step" data-step="1"><span class="loading-step-dot"></span>검색 전략 수립 (10개 쿼리)</div>
+      <div class="loading-step" data-step="2"><span class="loading-step-dot"></span>긍정·중립 후기 탐색</div>
+      <div class="loading-step" data-step="3"><span class="loading-step-dot"></span>부정 후기 타겟 탐색</div>
+      <div class="loading-step" data-step="4"><span class="loading-step-dot"></span>1인칭 발화 검증 게이트</div>
+      <div class="loading-step" data-step="5"><span class="loading-step-dot"></span>정규화 데이터 생성</div>
+    </div>
+  </section>
+
+  <!-- ============ Results ============ -->
+  <section class="results" id="resultsSection">
+
+    <!-- 1. Meta card -->
+    <div class="meta-card" id="metaCard"></div>
+
+    <!-- 2. Data Provenance (transparency) -->
+    <div class="provenance-card" id="provenanceCard"></div>
+
+    <!-- Tabs: VOC / Market Context -->
+    <div class="main-tabs">
+      <button class="main-tab active" data-tab="voc">
+        고객 VOC <span class="main-tab-count" id="tabVocCount">0</span>
+      </button>
+      <button class="main-tab" data-tab="market">
+        시장 맥락 <span class="main-tab-count" id="tabMarketCount">0</span>
+      </button>
+      <button class="main-tab" data-tab="asset">
+        데이터 자산
+      </button>
+    </div>
+
+    <!-- ===== VOC panel ===== -->
+    <div class="tab-panel active" id="panelVoc">
+
+      <!-- Sentiment -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">01</span>
+            <h2 class="section-title">감성 분포</h2>
+          </div>
+          <span class="section-subtitle" id="sentimentSubtitle"></span>
+        </div>
+        <div class="sentiment-row">
+          <div class="sentiment-bar" id="sentimentBar"></div>
+          <div class="sentiment-legend" id="sentimentLegend"></div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">02</span>
+            <h2 class="section-title">분포 분석</h2>
+          </div>
+          <span class="section-subtitle">카테고리 · 수집 소스</span>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card-title">카테고리별 VOC</div>
+            <div class="chart-card-sub">어떤 영역의 이야기가 많은가</div>
+            <div class="chart-canvas-wrap"><canvas id="categoryChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-card-title">수집 소스 분포</div>
+            <div class="chart-card-sub">블로그·커뮤니티·유튜브 비중</div>
+            <div class="chart-canvas-wrap"><canvas id="sourceChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Keywords -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">03</span>
+            <h2 class="section-title">핵심 키워드</h2>
+          </div>
+          <span class="section-subtitle" id="keywordSubtitle"></span>
+        </div>
+        <div class="keyword-cloud" id="keywordCloud"></div>
+      </div>
+
+      <!-- Insights -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">04</span>
+            <h2 class="section-title">인사이트 & 액션</h2>
+          </div>
+          <span class="section-subtitle">근거 VOC ID로 추적 가능</span>
+        </div>
+        <div class="insights-grid">
+          <div class="insight-card pain">
+            <div class="insight-card-header">
+              <div class="insight-icon">🔥</div>
+              <div class="insight-card-title">주요 불만</div>
+              <div class="insight-card-title-sub">Pain Points</div>
+            </div>
+            <ul class="insight-list" id="painList"></ul>
+          </div>
+          <div class="insight-card strength">
+            <div class="insight-card-header">
+              <div class="insight-icon">💚</div>
+              <div class="insight-card-title">주요 강점</div>
+              <div class="insight-card-title-sub">Strengths</div>
+            </div>
+            <ul class="insight-list" id="strengthList"></ul>
+          </div>
+          <div class="insight-card opportunity">
+            <div class="insight-card-header">
+              <div class="insight-icon">💡</div>
+              <div class="insight-card-title">기회 요소</div>
+              <div class="insight-card-title-sub">Opportunities</div>
+            </div>
+            <ul class="insight-list" id="opportunityList"></ul>
+          </div>
+          <div class="insight-card risk">
+            <div class="insight-card-header">
+              <div class="insight-icon">🚨</div>
+              <div class="insight-card-title">리스크 알럿</div>
+              <div class="insight-card-title-sub">Risks</div>
+            </div>
+            <ul class="insight-list" id="riskList"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- VOC Records -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">05</span>
+            <h2 class="section-title">정규화 VOC 레코드</h2>
+          </div>
+          <span class="section-subtitle" id="vocCountSub"></span>
+        </div>
+        <div class="voc-filters" id="vocFilters"></div>
+        <div class="voc-list" id="vocList"></div>
+      </div>
+
+    </div>
+
+    <!-- ===== Market context panel ===== -->
+    <div class="tab-panel" id="panelMarket">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">06</span>
+            <h2 class="section-title">시장 맥락 (Market Context)</h2>
+          </div>
+          <span class="section-subtitle">뉴스·출시 정보 · VOC와 분리된 보조 정보</span>
+        </div>
+        <div style="background: var(--maeil-50); border: 1px solid var(--maeil-200); border-radius: var(--r); padding: 16px 20px; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: var(--text-secondary);">
+          <strong style="color: var(--text);">📘 왜 분리되나요?</strong> 뉴스 기사·보도자료는 기자나 PR 담당자의 발화이지
+          소비자 1인칭 발화가 아닙니다. VOC 데이터의 순수성을 유지하기 위해 별도 섹션으로 분리하며,
+          VOC 해석을 돕는 보조 정보로 활용하세요.
+        </div>
+        <div class="market-list" id="marketList"></div>
+      </div>
+    </div>
+
+    <!-- ===== Data Asset panel ===== -->
+    <div class="tab-panel" id="panelAsset">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">07</span>
+            <h2 class="section-title">데이터 자산 뷰어</h2>
+          </div>
+          <span class="section-subtitle">정규화 완료된 데이터 직접 확인</span>
+        </div>
+        <div class="data-asset-card">
+          <div class="data-asset-tabs">
+            <button class="data-asset-tab active" data-asset-tab="json">JSON</button>
+            <button class="data-asset-tab" data-asset-tab="csv">CSV (VOC)</button>
+            <button class="data-asset-tab" data-asset-tab="schema">스키마</button>
+            <div class="data-asset-actions">
+              <button class="data-asset-action" id="assetCopyBtn">
+                <span>📋</span> 복사
+              </button>
+              <button class="data-asset-action primary" id="assetDownloadBtn">
+                <span>⬇</span> 다운로드
+              </button>
+            </div>
+          </div>
+          <div class="data-asset-viewer" id="assetViewer">
+            <div class="data-asset-panel active" id="assetPanelJson"><pre></pre></div>
+            <div class="data-asset-panel" id="assetPanelCsv"></div>
+            <div class="data-asset-panel" id="assetPanelSchema"><pre></pre></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-header-left">
+            <span class="section-number mono">08</span>
+            <h2 class="section-title">다운로드 & 액션</h2>
+          </div>
+          <span class="section-subtitle">Export & Integrate</span>
+        </div>
+        <div class="export-bar">
+          <div class="export-label">
+            <strong id="exportLabelName">-</strong>
+            <span class="muted">·</span>
+            <span class="muted" id="exportLabelCount">0건</span>
+          </div>
+          <button class="btn-secondary" id="exportJson">JSON 다운로드</button>
+          <button class="btn-secondary" id="exportCsv">CSV 다운로드</button>
+          <button class="btn-secondary" id="exportMd">마크다운 복사</button>
+          <button class="btn-ghost" id="newAnalysis">새 분석 시작</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="foot">
+    매일유업 · 고객 VOC 자산화 에이전트 v4.0 · Powered by Claude · Data Provenance First
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== Logo Embed ===== -->
+<script>
+  const MAEIL_LOGO_B64 = "/9j/4AAQSkZJRgABAQAASABIAAD/4QBMRXhpZgAATU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAABUqADAAQAAAABAAAAlQAAAAD/7QA4UGhvdG9zaG9wIDMuMAA4QklNBAQAAAAAAAA4QklNBCUAAAAAABDUHYzZjwCyBOmACZjs+EJ+/8AAEQgAlQFSAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwABAgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2RlZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp6vLz9PX29/j5+v/bAEMAAQEBAQEBAgEBAgMCAgIDBAMDAwMEBgQEBAQEBgcGBgYGBgYHBwcHBwcHBwgICAgICAkJCQkJCwsLCwsLCwsLC//bAEMBAgICAwMDBQMDBQsIBggLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLC//dAAQAFv/aAAwDAQACEQMRAD8A9I/4Ld/8Fp/jz4y+PniX9kv9lnxJd+EPBvg67k0rVdS0mZ7XUNV1G2bZcr9pQrJFbwyBoQkRXzSrs7OjKi/zSQeP/Htt4gPi221zUI9WJ3G+W6lFyT6+aG35981n+Kde1fxV4n1LxR4gl8+/1O7mu7mT+/NO5d2/FiTWFX9TZTk+GwGFhh6MFotXbWT6tvrf/gbH86Zrm+IxuJlWqTe+ivsuiR+mfwG/4LGf8FKf2dpIofBnxY1jVbCNwzWPiF11qB1HGzdeCWaNOOkMkeOxFftZ8A/+DrH4laZ9n0z9p/4W6fq6ZxNqPhi7eykVR0ItLrz1dvX/AEmMdwB0r+SCiubHcLZVi7uth437r3X98bX+Z0YPiXM8LZU67t2fvL8bn+kh8Af+DgP/AIJj/HVbez1DxpN4D1OcZNn4qtWsVT/eukMtkPxuAfbrj9ePA3xD8AfE/wAPQ+Lvhprmn+ItJuAGivdMuY7u3kB5BWSJmQ8ehr/H3rtvh78S/iR8I9f/AOEr+E/iLVPC2qYA+2aPeTWNxgc48yB0fGe2a+Mx/hfhp3eEryi+0kpL71Z/mfV4PxFrRssVRUvOLs/ud1+R/sBUV/m9/Af/AIOEP+CnPwRWGw1bxbZePdPgCqtt4nsUuH2jr/pNube5Yn+9JK/+P7XfAb/g6v8AhPq/k6b+0v8AC/U9BkJVWvvD11HqUJJ6u0M4tnjUeivKfrXxmO8Ps4w93CCqL+6/0dn9yZ9Xg+Ncrr6Sm4P+8v1V0f1rUV+bfwD/AOCvX/BOH9pBoLP4d/FbRrbULghE0/WnbR7tnP8ACkd6sJkP/XMuD2Nfo9b3FvdwJdWrrLFIAyuh3KwPQgjgivkcTg6+HlyYim4Ps01+Z9PQxNKtHnozUl3TT/ImooormNgooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKK+QPj9+39+xX+y4JYvjz8TdA8PXkK72sJLtZtQIHdbOHzLlv8AgMZrWjQq1pclGDlLsk2/wM6taFOPPUkku7dkfX9FfzHfHv8A4Oj/ANjnwN9o074A+EvEHj+8j/1VxOqaNp8n/A5vMuR+NqK/FP4+/wDBy9/wUK+KYn074TR6F8NbGTiN9OtBqF+qnqGnvfMiJ91t0I7YPNfWYDgPOMTZulyLvN2/DWX4HzeM4xyvD3XteZ9oq/47fif6Cl7e2em2kl/qEqQQQqXkkkYKiqOpJPAA9TX5k/Hr/gsz/wAE0/2d/OtPGPxV0nVdQhLIbHw8X1qcSLwUf7EsqRMD1EroAeCc1/m/fG39qT9pL9pS9a9+P3jzXvGGX8xYdUv5bi3jb/pnAzeTH9I0Ue1eDAADA4Ar7PA+F1JWeMxDflFW/F3/ACR8pjPEWW2FofOT/Rf5n9pnx4/4OtfAVj5mnfsyfCq/1RiGVb/xNeR2KKw+6wtrX7Q0inrgzxHH6fid8e/+C/H/AAU8+O6TWEPjeHwPp06sj2nhS0Ww691uZTPeIR2KXC/nX4y0V9ngeD8owlnTw6b7y95/jdL5JHymM4rzTE3UqzS7R0/LU9D8cfF74t/E7URrHxL8Vaz4kvA2/wC0arfz3su713zO7Z981+g37Bv/AAV1/a+/YX+IenappfiXUvFfgpZY01Lwvq13Jc2k1qD84tfNZvsk+CSkkW0FgvmLIg21+W1Fezicvw2IovD1qacH0t+Xb1R5OHzDE0Kqr0qjUu9/z7n+vZ8NvjD8Ovix8O9A+KfgrVIbjRvEunWuq2ErOEZ7a8iWaJipOQSjgkHkV2n/AAkOgf8AP9b/APf1f8a/y5PBP7fP7RfgrwZpHg3QdZlhsdJsreyt4wRhYoI1RB07KAK6f/h4/wDtQ/8AQdl/Mf4V+Y/8Qzpf8/X+H+R+kf6/r+T8z//Q/nGuv+PmT/eP86gqe6/4+ZP94/zqCv68R/MDCiiigQUUUUAFFFFACMqsNrDIPrX0f8Cv2wP2qP2Y50k/Z++IWv8AhKJGL/ZbC9kSzZj3e1JNu/8AwOM1840VnVo06sXCrFSj2auvuZrRr1KUuelJxfdOx/Rv8BP+DnH9vb4am30/4z6X4f8AiRYxjEklxAdK1CTH/Te1/wBHX/wENftf8Bv+DoH9hv4gJDY/HHQfEPw6vGA82ZoBq+noT/dltf8ASGx72q1/AzRXymO4FyfFXfseR94O34ax/A+lwfGeaYfR1OddpK/46P8AE/1lPgP+25+yJ+09Gv8AwoL4j+H/ABRcMAxtLO+jN6gPTfbMVnT/AIEgr6kr/HHX5JUnTh42DIw4KsOQQexB6Gv0M+An/BV7/gon+zZ5Nt8MPizrrWEJG2w1aVdXtAg/gWO+WcRqfSLYe4IPNfGY7wumrvB4hPymrfir/wDpJ9Xg/EWm9MVRa84u/wCDt+Z/qWUV/ED8BP8Ag6p+O2gNBpv7Svw10fxLACFkvdAuJdLuFX+8YZvtMcjeweFfpX7W/AT/AIOJ/wDgmd8afs1h4n8Raj8PdSuTsFv4lsXjiDd83Vsbi2RfRpJUyOoB4r43HcG5xhbudByXePvfldr5o+swfFGWYnSFZJ9pe7+f6H7o0V5x8MvjF8JPjV4fXxX8HfFGk+K9LfGLvR72G+gOenzwu6/rXo9fMzhKLcZKzR70ZKSunoFFFFSMKKKKACiiigAoorK1vXdE8M6VNrviS8g0+ytl3y3FzIsUUajuzsQoHuTTSb0QGrRX5LfHr/guN/wTG+AHm2erfE2y8T6jGG22fhdH1lnZeq+dbhrZGHpJMnP0OPxQ+Pf/AAdb22J9O/Zc+E8jZB8nUfFd4EKntusrMvkfS8FfQ4HhTNsXZ0sPK3eXur75Wv8AI8XGcRZbhbqrXV+y1f3K5/YxXlXxY+OvwT+A+hHxP8bfF+jeENPxxcazfQ2UbeymZ0DHsAMkngV/nHfHz/guf/wU4/aAM9pqHxGm8JadcKVNj4VhXSkTPXbcJuvB+Nwa/KbxJ4j8ReMtcm8UeMNQutX1O5OZry+me4uJD/tSSFnb8TX2WB8L8RKzxldR8opt/e7JfifJ43xEw8brC0nLzei/V/kf6Gnx7/4OPP8Agmz8HjPp/gjVtW+IuoQkp5Xh+xZYN3vc3ht4mX/aiMntmvxO+PP/AAdQ/tL+KvO079nX4e6H4Pt2LKt3q80ur3e3syqn2WFG9mWUfWv5Y6K+zwHAGT4azlTdR95O/wCCsvvTPlMbxvmlfSElBf3V+ruz7u+Pn/BTr9v/APaZE9t8Yfivr95Y3IKyafZXA0yxdT/C1tZCCJwP9tWPqc818HrGicIAM88DuadRX12HwtGhHkoQUY9kkl+B8viMVWry5q03J+bb/MKKKK3MAooooAKKKKACiiigDsbX/j2j/wB0fyqeoLX/AI9o/wDdH8qnrM0P/9H+ca6/4+ZP94/zqCp7r/j5k/3j/OoK/rxH8wMKKK1NI0PW/EF39g0Cznvp9pfyreNpX2jqdqgnA9aTaSuwjFt2S1Muiu6/4Vd8Tv8AoW9V/wDAKb/4ij/hV3xO/wChb1X/AMApv/iKj21P+Zfejb6tW/kf3M4WitTWND1vw9diw8QWU9hOVDiK5iaJ9pyAdrgHBIPPtWXVppq6MZRadmtQooopiCiiigAorp9J8E+NPEFp/aGg6PfX1vuK+bb20kqbh1G5VIyO4zWn/wAKu+J3/Qt6r/4BTf8AxFZurBOzkvvNlh6rV1B/czhaK7r/AIVd8Tv+hb1X/wAApv8A4iuFBzyKqM4y+F3InSnD44tep0PhHxf4u+H/AIgi8W+ANWvdC1aAER32m3ElpcoD/dliZXH4Gv1m+An/AAXm/wCCnnwE8izj8f8A/CaadbqFWy8WWy6kGx3e5BivWPubnn681+PFFcmMy3C4tcuJpRn6pP8A4Y6sJmWKwzvh6so+jf5bH9mvwI/4OuPDcyx6f+098Jru1KqN9/4VvEud7Hri0vPI2Af9fTk/hz+2HwF/4LXf8EzP2hWisvDPxS03QdRkKr9i8Sh9Fk3v0RXuxHDIx6Yikfnjqa/zGqCARg18djvDnKa93RUqb8ndfdK/4NH1WD49zGlZVkprzVn96/yP9ivTdS07WbCLVNIuI7q1nUPFNC4eN1PQqykgg+oNXa/yEvh38afjN8IEki+EXjDXPCizP5kg0XUrjTw74xubyJEycDGTXWeMP2pv2ofiJpMug/EH4l+LdesJ1KS22pa5e3cLowwVaOWZlIIJBBHNfMy8LKvPaOKXL/hd/u5v1PoI+I9Hl1w75vVW++36H+m9+0D/AMFLP2DP2XWubT42fFTQNL1C0GZdNguft+pL9bO0E1xz2/d4/I1+Jnx7/wCDp/8AZf8ACJudN/Z18Aa942uomCx3WpyR6LYSA/xocXNwQP7r28ZJGMgc1/C0kccS7I1Cj0AwKfX0GA8Ncso2eIlKo/XlX3LX/wAmPFxniBjqmmHhGC+9/jp+B++fx7/4OQ/+CkfxdM1h8P8AUNF+G9gzHYuh2Cz3RjP8Lz3xuAT/ALcUcJ9MV+M3xe+Pnxz/AGgdW/tz46+Mtb8Y3SyGRH1m/mvREzZ/1ayuyxjnAVAABwABXktFfZYHJ8Dg1/stGMfNJX+/d/efKYzN8biv94rSku19Pu2CiiivSPNCiiigAooooAKKQkA4JpaACiiv6xP+Df7/AIJm/sR/tu/sz+NfiF+0/wCCj4m1jSPFb6baXH9pX9l5dqLO1lCbLS5hRvnkc7mUtzjOABXlZznFHLMM8XXTcU0vdtfX1a/M9PKMqq5jiPq1FpSs3re2nomfyd0V/pT/APEP7/wSN/6JMf8Awf61/wDJ9H/EP7/wSO/6JMf/AAf61/8AJ9fHf8RPyr/n3U+6P/yZ9V/xDzMf+flP75f/ACJ/msUV13xA0ux0Px7rmiaWnlWtnqN1BCmS22OOVlUZJJOAAMkk1yNfosZcyTR8JOLjJxfQKKKKZJ2Nr/x7R/7o/lU9QWv/AB7R/wC6P5VPWZof/9L+ca6/4+ZP94/zqCp7r/j5k/3j/OoK/rxH8wMK/oU/4NkyR/wUvmx/0Jmr/wDo+zr+euvvT/gnH+3brv8AwTr/AGipP2hvDvhu38VXL6Pd6QLK5uWtEC3TxOZN6xyHK+UBjbznrXkZ/hKuJy6vh6KvOUWkttfnoetkOKp4fMKNes7Ri7tn+qJRX8hP7NP/AAczfFr4/wD7RfgL4FS/B/SrCPxn4i0zRHuo9YmkaBL+4jgaUIbZQxQOWClhnGMiv69q/nDNsjxmWzjTxkOVyV1qnp8mz94y7NsLj4ynhZ8yWj0a/M/m8/4OPf2A/wDhor9maL9q34e2Xm+L/hXDJNeiJcyXfh9jvuVPQk2h/wBJXJwsfnAAs4r+Aqv9i+8s7TUbSXT9QiSeCdGjkjkUMjowwVYHIII4IPBFf5hf/BXL9hC8/YA/bJ1z4aaNbung3Xc614XmIJX+z7hzm33Hq9rIGhIJLFAjtjzBX6h4bZ9z05ZXWesdYenVfJ6r1fY/POPsm5ZRzGktHpL16P57P5H5iUUUV+rH5mFepfBD4M/ED9on4v8Ahv4F/Cu1F54h8V38OnWMbZ2CSU8ySEAlYolzJK2DtjVm6CvLa/s+/wCDYr9gX+ydB1f/AIKCfEixxcamJ9E8IrKv3bZG2Xt4uc8ySL9mjbhgsc3VZBXicQ5zDLMDUxUvi2iu8nsv1fkmezkOVSzDGQw6+HeT7Jb/AOS82f05fsm/s0+AP2Pf2dfCf7N/wzUnSvC1itt57KEkurhiXnuZAOPMnmZ5XxwGYgcYr6Ior5H/AG8P2k9a/Y//AGR/G/7Svh7R4dfu/CVnHdpYTzNBHMGmjjYGRVcrhXLZCnkV/M8VWxeISvzVJy69XJ9/Ns/oFunQpX2hFfckv8j6r1IkadcEcERv/I1/jj6b/wAg63/65p/IV/W7P/wde/Fu4geBvgro+HUqf+J3P3/7da/kpt4Rb26QA5CKFz9BX7hwDkGOyxYlY2HLz8ltU9ua+zfdH5FxtnWDx6oLCz5uXmvo1va268iaiiiv0M+CCiiigAooooAKKKKACiiigAooooAKKKKACv1G/wCCR3/BPCX/AIKOftTx/DHX7yfTPB/h+0Or+Iry2wJzbK6pHbwkghZbh22hiCFRXfBKhT+XNf0af8G037VXw6+Af7ZGvfCf4k3kOmQ/E7TLfT9Nu52CRnVLOUvBbljgL56SyqhJ+aQIgyzivE4jxGJoZZiKuE/iKOnl3fyV38j2eH6GHrZjRp4r4G9fPsvm7I/sh8A/8Ezv+CfPw28DRfDrwz8GfB76WkQicX2k29/POBxmee5SWaZvVpXZvev5Jv8Agvz/AMEhvhZ+yBpel/tY/suWDaR4Q1nURputaIjNJBp93OrPDPblizJBKVZGjJ2xyFBHhX2r/d5X8uv/AAc7/tc/Dbwp+y/pv7HWnXsF74x8XalZ6ndWaMGkstLsWMomkAyUM06okQON6iQj7hr8T4OzPMXm9KNOpKSm/eTbaa6t37LW5+u8UZfgv7MqupCMeVe67JWfRL12sfwo1/R3/wAEYv8Agst+zz/wTZ+AXiv4U/GDwx4m13UNe8RtrEEuiRWkkKQta28G1zcXUDB90JOApGCOc8V/OJRX7tmmV4fMMO8NiU3BtPR22PxnLMzr4Cv9Yw9uazWqvuf6mX/BO3/go38I/wDgpR8NNe+KHwf0PWtCsvD2q/2RPFraW8czy+THPuQW8867NsoHLA5B4xgn9Bq/ls/4NTv+TRPiZ/2On/tha1/UnX838R4Glg8yr4agrQi7Lr0R++ZLi6mKwNHEVfikrux/kCfFX/kqXib/ALC19/6OeuCrvfir/wAlS8Tf9ha+/wDRz1wVf07R+CPoj+ecR/Fn6v8AMKKKK0MTsbX/AI9o/wDdH8qnqC1/49o/90fyqeszQ//T/nGuv+PmT/eP86gqe6/4+ZP94/zqCv68R/MDCiiigR+g3/BJ/RW1/wD4KVfBHT0G4p4tsLnHtat5x/LZmv8AUyr/ADF/+CI2m/2t/wAFWfgvZ/3dVvZv+/Gn3Uv/ALJX+nRX4f4oS/4UKMf7n5yl/kfsXh5G2AqS/vv8kFfjZ/wXA/YA/wCG6/2OL9/BViLn4geAvN1rw7sXMtxtX/SrJT1P2mJfkXIBnSIk4Br034lf8FA9H+DH/BU7wn+w98QJooNI+Ing2C/0i4fC+TrSXl2iwscD5buKIqpY8SxIigmQ1+o1fEUJYrLK9DFx0dlOL6Nbfdo0z66tHD46jVw0tVrGXk/6s0f44qsrqHU5B5FOr93v+C/37AZ/Y9/bBuPir4Gs/J8C/FSS41eyEa4is9T3Br6144VS7ieIcDZIUQYiNfhDX9M5ZmFLHYWni6PwyV/TuvVPRn8+5lgKmCxM8NV3i/vXR/NH1l+w5+yZ4y/bf/al8Jfs2eDTJAddut2oXqLuFjpsHz3VweCoKRgiMNgPKUTOWFf6pvwy+G/g34PfDrQvhR8O7JNN0Hw3YW+m6fax/dit7ZBHGuepIUDJPJPJ5r+ef/g27/YDH7P37Nk/7XHxBsfK8W/FKCNtOEq4ktPD6nfAAeo+2MBcNg4aMQZAKmv36+Onxq+Hv7OXwe8SfHT4rXn2Dw94WsJdQvZQNz+XEMhI1yN8kjYSNBy7sFHJFfiHHedSzHMFg8PrCm+VW6yej9ddF6abn6/wdlCwGB+sVtJz95+Uei/V/wDAPV6/Or/grlpiat/wTK+OFtIu4R+EdRnx15gj80H8Cua6T/gmZ+054r/bK/Yn8H/tMeNYY7XUfFc2rzvbQ4MdtHDqV1BFArALuEMcax7yAX27jyTXQf8ABSDSpNc/4J7fHTSYU3vP4A8RqgBx839nzkfrXyuFozw2ZQo1PihUSfqpWf5H0larCvgpVIaxlBtejR/lMUUgORmlr+pz+bgorofCXhLxR4+8Vab4G8EafcatrOsXMVlY2VpGZZ7i4nYJHHGg5ZmYgACv7Pv2D/8Ag2I+Guj+GrLx3/wUA1S41zW7lRI3hfRbprawtVYf6u4u4ts88o43GB4o1bIDSjDnxM64hwWV01PFy1e0VrJ+i/V2R7OUZFi8ym44eOi3b0S/rsj+KAnHJpAyt905r/VK8A/8EvP+Cc/wzsoLPwn8EfBga2AWOe80e3vroYGMm4uklmJI6kuSe5rvvEP7Bf7Dfiy2+x+J/g14G1CMdBceHrCTbxjIzDwQOhHIr4iXilhea0cPK3qvy1/M+vXhzX5dcQr+j/z/AEP8niiv9Eb9qv8A4Nz/APgn38e9GvL34R6ZcfCrxLKGaC90SR5bHzNpCiWwmcwmIHkrbm3c4++Oa/iH/bm/YO+P/wDwT6+MbfCL472KAXSPcaTq1oS9hqlqpCmSByAQyEgSxMBJGSMjayM/1eRcW4DNX7OhJxqfyy0fy3T+Tv3SPms54XxuXR9pVSlD+ZbfPqvy8z4xooor6c+cCivfP2Z/2Yfjh+1/8XdP+B/7PuhS67r+oAyFV+SC1t0IElxcyn5YYY9w3O3UkKoZ2VT/AGo/sd/8GyX7KXwv0S1179rzUbr4leJGCSTWVtNLp2jW7jnaiwtHcz7TwXllVJAOYVyRXz2d8T4DKkliZ3m9orWXr0SXq15HvZPw5jMyu6EbRX2nov8AN/JH8GJYDqcUoOeRX+rb4O/4J0/sCeALVbXwj8FfBFntXZ5v9g2bzMP9qV4mkb/gTGuW+If/AAS3/wCCcvxR06fTvFvwS8HD7SCslxY6TBp10cjHFxaLDMp9CHBHavj14pYTms8PK3qr/d/wT6l+HOI5dK8b+j/r8D/K7or+0z9u3/g2E8D6hoN548/4J/6zPpeqwKZB4W125M9pcBR9y2vZMywuQDtFwZUdiAZIlyw/jf8AHngPxr8LvGep/Dn4j6VdaHr2i3D2t9YXsZint5k6q6nkdiD0IIIJBBP22TcQ4LNIOeEndreL0kvVfqrrzPkc3yHF5dJRxEdHs1qn8/0epydIQGGGGRXR+ELW3vvFulWV4gkhmvII3Q9GVnUEH6g1/ptf8OYP+CXH/RFtA/Kb/wCO1x8RcU4fJ3TVeEpc97Wt0t3a7nXkPDVbNI1JUpqPLbe/X09D+Bjwd/wVw/4KXeAvA0fw48MfGfxFHpMUflRrcSRXdwiYwFW5uI5LhQo4ULKNo+7ivgrxX4s8V+PPEl74z8dapea3rOpSma8v9Qne6uriUgAvLLKWd2wAMsScCv8ATc/4cwf8EuP+iLaB+U3/AMdr+fn/AIOJv2Cf2Pf2TP2XPA3jX9nLwDpvhLVdT8XJYXVzZB98tsbK6kMZ3uwxvRW+orwMk4zyqvjI4fC4VwnUdr8sVfrrZ3Z7ub8KZlSwkq2IxPPGCvZuT+65/ITRRRX6Mfnx/dL/AMGp3/JonxM/7HT/ANsLWv6k6/ls/wCDU7/k0T4mf9jp/wC2FrX9SdfzTxl/yOsT/i/RH9B8Mf8AIqw/+E/yBPir/wAlS8Tf9ha+/wDRz1wVd78Vf+SpeJv+wtff+jnrgq/pKj8EfRH4FiP4s/V/mFFFFaGJ2Nr/AMe0f+6P5VPUFr/x7R/7o/lU9Zmh/9T+ca6/4+ZP94/zqCp7r/j5k/3j/OoK/rxH8wMKKKKBH7Lf8G/mkf2r/wAFZvhfMTgWSa3cflpV2n/s9f6UVf51n/Btzo41T/gqLol4Rn+zvD2s3I9sxLD/AO1a/wBFOvwbxMnzZtBdqcfzk/1P2ngCHLljfeb/ACS/Q/gZ/wCDnXxNq+i/8FL/AAdrfh26lsNR0bwLo89rdQMUlhni1LUZY5EYcq6NhlI5BANf1l/8Er/26tI/4KB/sf6B8ZZnhj8UWI/srxPaRAKINVtlXzGVMnbHOpWeIZOEkCk7lOP47f8Ag5l1L7f/AMFM/s//AD5eD9Ig/OW6k/8AaleJ/wDBDb/goF/wwx+2HZ6Z44vvs3w++Ifk6Nr3mNiG1l3H7HensPIkcpIxIAhlkY5KrX0mM4f/ALQ4Yw06a/e04c0fNdY/NarzSXU8PDZ39S4hxFOo/wB3UlZ+T6P9H5M/ua/4Kb/sR6D+39+x94l+A90sUWvKo1Pw5eS9LXV7QMYGLYO1JQWglIBPlSvjnFfwF/8ABLj/AIJ6eK/20/26LD9n7x9pdzYaH4SuZb3xrFMrRyW1tp8vly2b9Nk084FvtyGUF3GfLNf6edeDfC39mf4LfBj4l+Pvi98OtFi07xB8TL+21HX7pOtxNaQLBGAOiqAHkIH3pZZHOWc18RkPFtbLcDiMJDeS9x/yyejf3arzXmz67N+G6OPxdDEz+y/eX8y3S+/8Ge32NjZaZZQ6bpsKW9vbosUUUShEREGFVVGAAAMADgCv4rf+Dmv/AIKCnxV4w07/AIJ9/DK+zp2hNDq/i94m4lvWUPZ2bYPIhRhcSKQQXeEghoyK/qC/4KHftm+E/wBgr9k/xN+0R4jEdxfWUQtNFsZGx9u1W4BFtBxzt3AySleViR2H3a/yyfG/jbxb8SvGer/EXx9fyaprmvXk+o6heTf6ye6uXMksjYwMs7E4AAHQDFe74c5D9YxDzKsvcp6R85d/+3V+LXY8XjrOvq+HWBpP3p7+Uf8Ag/lc/wBGf/g3mvFuf+CSHwxtx1trnxDGfx1m+f8Akwr9K/2r9IfxD+y38StAjGWvvCus24HvLaSr/Wvyj/4NwtRW9/4JX+FrRetlrOuQn6teSSf+z1+1XxD0xtb8Aa5oyDc13p91CB6mSNl/rXyOfPkzrEy7VZP/AMmbPqcp9/LKC704/wDpKP8AHzhbdCreoBqSqti2+yhf1RT+lWq/p1n87SVm0f0kf8GwPwi8FePP27PEPxF8TxR3F/4J8MzXWlRuATHc3k0ds06/7SQtJH9JfXFf34V/lG/sIfts/FP/AIJ//tGaZ+0P8KYob2a3hksdR025JWDUNPuCplt3ZcshLIjo4B2SIrFWUFG/qu8R/wDB1z8B4/Akl14R+E3iKXxQYjstb27tYtOWUjjNyjSTMoP/AE7gkDtnj8e444YzPG5ksRhoc8Gklqvdt0d2vW+2p+qcH8QZfhsB7CvNQkm279b9V37d9Ct/wWA/4Lf/ALZf7DX7Y+o/s5/BXS/CT6LZ6ZYX0VzqNnc3V4zXabnDlLqGNcMp2gJnaQSSTx8efAH/AIOof2jtE8VwQ/tO+AdB8QaBI6rPJ4cE2nX8KH7zotxPcQzEDkRkw5PBcDp/N5+0l+0f8Qv2qvjn4l/aF+Mt/BdeI/FN39pujCPLhjCIsUUMSEkrFDEiRRgszbFG5mbLHxRLm2kOI5Fb6EGvsMHwTlqwVOhiqEXPlSk1dO9tWnvv/XQ+ZxnF2YvFzrYeq1Tu+VO1rdNLH+vD8Bfjr8L/ANpj4P6D8dvgxqaax4a8SWwurK5QFSRkq6Op+ZJI3Vo5EYBkdSpAINfnz/wWq/ZA0T9r79gHxppS2az+JvBtpN4m0CZV3TLdaejSSQp0J+0wCSErnG5lbGVWvz9/4NZvGWta5+wv4y8JalO0ttoPjW5SzVjkRRXNnaSsi+gMpd8f3nJ71/Sb4isrbUvD99p14u+G4t5Y3U91dSCPyr8TxtKWT5vKNCX8Kej8t1f5aM/WcLUjmeWxlVjpUjqvVa/jsf47ysGUMvQ81paPo+r+ItYtPD3h+1lvtQ1CeO2tbaBS8s08zBI40UcszsQqgcknFY9suy2jTrtUD8q/bL/g34+AWl/Hj/gpx4RudehS4sPAlneeLJIpF3K0tlshtj7GO6uIZVPrGPrX9IZljY4PC1cVLaEW/Wy2+ex+C5fg3isVTw0ftNL+vkf2rf8ABKj/AIJ0eBv+CdP7NFj4GggguPHGvRw33izVUAZ7m+2n9wj9fs1ruaOBeAfmkIDyOT9fftK/tMfBf9kX4P6p8dPj1rMeieHtKChpGBeWaZ+I4YY1y0ssh4VFGepOFBI95r+Mv/g4y8A/tzftTftJ+GvhH8Fvhp4v8SeAvBOlJdLcaVpF3c2Vxq9+WMziSKMxyGKBYo1OSY2aUcbmFfzplWGedZp/ttWyk3KUm0tOyvp2S7LppY/dsxrrK8v/ANlp3cUlGKXXzt977nO/Gf8A4OtviXdeILi3/Z2+FOm2WkxuRBceJLuW4uZo88M8FqYkiYjqonlA/vGvcf2T/wDg6Z8IeKvF9p4R/bE8Bp4WsLt1jOv6DPJd29uWON09pIvnCIdWaKSVx2jPWv5hv+Han/BRD/ohnjz/AMJ+9/8AjVH/AA7U/wCCiH/RDPHn/hP3v/xqv1ypwtw1Kl7JKK81PX1u5P8AFW8j8zhxFxDGr7RqTXbk0/K/6n+qP4f8QaF4s0Gx8U+F7yHUdM1O3iu7S7tpFlhngmUPHJG6kqyOpDKwJBByK/mH/wCDk3/gnfofxS+CP/Ddfw2sFi8WeB0ih8QCFcNqGiuwQSuAPmks3YMG4/cGTcSEjC/YP/BvnZ/tLeDv2FJfg1+054V13wrqHgzXruy0iHXrOezml0qdIrmPYJ1VmSOaWaNcfKqqqjpgfsb8Wvhx4f8AjH8K/Evwj8WRiXS/FOlXmkXiMMhoL2FoZAR3+VzX5Fh8RPJM35qU+ZU5WutpR6/evufofptehDNct5akbc8b2e8Zf8Bn+RB4e1KPRvEFhrEyl0tLmKZlXqRGwYge5xX9yOj/APB1D+y9rWtWmi23ww8Wq15PHAjNLZYBkYKCcTHjnmv4WprK/wBNmfTtVTyrq3YxTIeqyIcMPwIIrqPAP/I+aH/2EbX/ANGrX71nfD2CzNRli4t8idrNre3b0R+MZNnmLy6UqeHaSk1e6vt/w5/sGV/Lx/wdXf8AJmnw4/7HmP8A9N17X9Q9fy8f8HV3/Jmnw4/7HmP/ANN17X4Rwd/yOcL/AIv0Z+y8Tf8AIqxH+Fn8J1FFFf0sfz4f3S/8Gp3/ACaJ8TP+x0/9sLWv6k6/ls/4NTv+TRPiZ/2On/tha1/UnX808Zf8jrE/4v0R/QfDH/Iqw/8AhP8AIE+Kv/JUvE3/AGFr7/0c9cFXe/FX/kqXib/sLX3/AKOeuCr+kqPwR9EfgWI/iz9X+YUUUVoYnY2v/HtH/uj+VT1Ba/8AHtH/ALo/lU9Zmh//1f5xrr/j5k/3j/OoKnuv+PmT/eP86gr+vEfzAwooooEf0Vf8GwOmfbv+CkWrXZ6WXgXVZh9Wu7CP+Tmv9A6v4Ov+DVzSVuP22/Hutlcm08ETQg+nn39of18uv7xa/n7xFlfOZLtGP5X/AFP3DgaNspg+7l+Z/nJf8HGGspqv/BVLxdZKcnTdI0S2PsTaJN/7Vr8MyAwKsMg9RX7A/wDBfC8+2/8ABXD4vsDkRy6HGO+NmjWAP65r8f6/aOHIcuVYRf8ATuH4xTPyfiCTlmeJb/nl+Z/ok/8ABv3/AMFBf+Gv/wBkyP4PfEC+Nx49+FscGmXjTMTLe6YQVsrrLcswVDBMcsxePe2PNWv3vr/Kl/4J2fto+Kf2Bv2s/DP7ROgiW4061c2Ou2MR5vtIuSouYgMgF12rNECQPOjQngGv7mP+Cx//AAU58K/ssfsHWfjb4Ha5DeeJ/i9Zi28HXlo4OLO6hWSbU4zkHbDBIhjYA4mlhyCpNfkHFfCVWnm8KeEj7ld+72T+0vJL4vT0P1LhviWnVyyVTEy96ive810fq9vX1P5gf+Dgz/goGf2uP2sX+CHgC987wJ8K5p9OhMbZivdYzsvLnjhljK/Z4jzgLIynbLX4D0iqFUKvQcUtftOV5dSwOFp4Sj8MVb17v1b1PyPMsfUxuJniau8n9y6L5I/0Hv8Ag2R1aPUf+Ca8tkhydP8AF+rQN7Fkt5f5SCv6F5EEsbRt0YEH8a/mf/4NXL4z/sD+OLJ2yYPiHfYHor6ZphH65r+mOv504sjy5xil/fb+/U/eOHJOWV4dv+VH+OtquktoGq3WhP1sZpLc/WJiv9KoV65+0Do58PfH3x14fYbTYeI9Vtsenk3Uqf0ryOv6WpT54Rn3SZ/P1eHJVlDs2vxP0H/4J1f8E4Pjl/wUh+L8vw6+Fpj0nRdJSOfXdfu42e106CQkINqkGWeTa3lQhl3bSSyqrMP7n/2W/wDgg7/wTj/Zn0u1l1DwXD8QdeiVfO1XxYF1HzHHOUtGAtIwD93bDvAwC7Hk2/8Agg/8AfDPwJ/4JmfD280iFBqPje2bxRqdwq4aebUTui3H/pnbCGIf7me9fd37Z/xx1b9mf9kv4j/tAaBax32o+D/DuoapZ282fKkubeFmiEm3nZv278c7c1+E8UcU47HY+WCws3CmpciSduZ3tdvzey2S89T9m4d4cwmCwkcTXgpVGuZtq9tL2S8l13ZqeJIf2Uf2ftEhuPF6+E/BGmqpWJrwWemwBUHIUv5a4A646CvFL7xf/wAEx/jpGdC1HVPhh4wWXj7PJPpWobs9PlJf+Vf5f3xe+L/xS+P/AMQr/wCLHxs1+88UeJNUcvc6hqEhklbJJCKPuxxrkhIowscY+VFVQBXmjRROMOoI9xX0lHwyaipTxjU+6Wl//Arv10PBreIUeZxhhk4eb1/K35n+uP8AAj9nb9nn9nrRtRsv2c/CukeE9M165GoXUGiwJbWs0+xY/MEcWIwSiqMqACAK9n1P/kG3H/XJ/wCRr+Xn/g1LAj/Y/wDiVbx8Rp41O1R0GbC1JwO2a/qG1P8A5Btx/wBcn/ka/MM8wUsJmFXDTqObi7cz3ei83+Z+hZVio4nB068Ycqkr27fkf46MX+rX6V/Tl/wauz6ev7cfjy2lA+1v4FuGiPcRrqFkH/MlPyr+Y2L/AFa/Sv2G/wCCEf7RWm/s4/8ABS/wNqPiGdLXSfGK3HhS8lc4C/2mF+zewzeR26kngKSa/ofinDzr5TiacN+Vv7tf0Pw3hytGlmlCc9ua336fqf6W1FFfx1/8HOX/AATs8TeL7/Sf+CgPwy0g6nbaVpy6R4vjhj3yW9vbsz218VAJMah3inb/AJZqImI2B2X+eMjy2lj8ZDCVa3s+bZ2vr0W632Wu9kfuWa42phMNLEU6fPy7pOzt1ez2P7FKK/xuP7K0v/n2i/74H+FH9laX/wA+0X/fA/wr9I/4hUv+gz/yn/8AdD4P/iJEP+gZ/wDgX/2p/sj0yWWOCNppmCIgLMzHAAHUk1/jd/2Vpf8Az7Rf98D/AAr1bwp+zv8AFDxv8NvEHxm8KeEbu78I+FERtW1tbbbp9o0kscKRtcMBGZWklQLCrGQ5yFwCRE/C2EFeeNsttYW1ey/idS4eInPdQwjfX4v/ALU5vxj4ji8ZeL9W8YW6GOPVr24vVQ8FRcSNIB+G6rPgH/kfND/7CNr/AOjVrk66zwD/AMj5of8A2EbX/wBGrX65KKVNpbWPzCEnKspPq/1P9gyv5eP+Dq7/AJM0+HH/AGPMf/puva/qHr+Xj/g6u/5M0+HH/Y8x/wDpuva/m3g7/kc4X/F+jP3zib/kVYj/AAs/hOooor+lj+fD+6X/AINTv+TRPiZ/2On/ALYWtf1J1/LZ/wAGp3/JonxM/wCx0/8AbC1r+pOv5p4y/wCR1if8X6I/oPhj/kVYf/Cf5AnxV/5Kl4m/7C19/wCjnrgq734q/wDJUvE3/YWvv/Rz1wVf0lR+CPoj8CxH8Wfq/wAwooorQxOxtf8Aj2j/AN0fyqeoLX/j2j/3R/Kp6zND/9b+ca6/4+ZP94/zqCp7r/j5k/3j/OoK/rxH8wMK/sD/AODcb9if9kr9qD9mTx94r/aF+HuieMNS03xX9jtbnVLVZ5Irf7FbSeWpPRd7M2PUmv4/K/p5/wCCFv8AwVh/ZI/4J8/s/wDjP4c/tDT6vFqeu+JP7UtV06xN0n2f7LBDlmDDDb424x0wa+V4zo4uplk4YJSdS8fhvffXbU+n4Qq4anmKlimlCz+K1r/M/sf+A/7FP7Jv7L+u33ib9nn4faL4O1DU4Ba3VxpdssDzQqwcIxXqAwzj1r6gr+fz/iJc/wCCZP8Az9+J/wDwTt/8XR/xEuf8Eyf+fvxP/wCCdv8A4uvxCrw7ndWXPVw1ST7tNv8AE/X6edZXBcsK8EvJpH6WfFH/AIJw/sIfGzx9qXxT+Lfwo8OeIfEesNG97qN9ZrLcTtFGsSF3PJ2xoqj0AAr+Kn/g4w/Zu+Av7Mf7WPgrwb+z54S03wfpV94RjvLi10uBYIpLg3l0hkYL1baqrn0AFf0Vf8RLn/BMn/n78T/+Cdv/AIuv5dv+C5X7eHwE/wCCgP7SPhT4o/s9y38ulaP4aj0q4OoWxtZBcLdXExAUk5XZIvPrx2r7PgrAZxQzKn9bhUVJRa97m5Vppvp6HynF2Ny2rl1RUJwdRtbWvvrtqfinWvqXiHxBrNpZ2GsX9zdwafH5NrHPK0iQRk52RqxIRc87VwM1kUV+ytLc/JFJpNJhX99n/BG3/gnP+wp8cv8Agmv8Mfil8X/hT4c8ReI9Vg1JrzUb6ySW4nMWo3UaF3PJ2oiqPQADtX8Cdf2a/wDBLX/gub+wn+yN+wZ8P/2d/i/c68niPw5FfpeLZ6a08INxfXFwm2QMA3ySLnjg8V8Tx5Qx1XA044BSc+dX5L3tyy7dL2PseCa2Ep4yo8W4qPLpzWte67n9SnwI/Zr+An7MHhq88G/s9+EtN8H6VqF2b65tdMhEEUtyyJGZGUcFiiIufRRXt9fz+f8AES5/wTJ/5+/E/wD4J2/+Lo/4iXP+CZP/AD9+J/8AwTt/8XX43U4bzqpJzqYao2+ri2z9WhnmVxSjHEQS/wASP0E1/wD4JV/8E5PFWvX3inxH8GPCt7qOp3Mt5d3E1gjSTTzuXkkYnqzMxYnuTX+f/wD8Fl/hP8Nvgb/wUx+KPwp+EGiWnhzw3pEukLZadYxiK3gE2lWU0mxBwN0kjufdia/r8/4iXP8AgmT/AM/fif8A8E7f/F1/GZ/wVO/aP+Gn7XX7fXxC/aM+Dz3UnhvxLJpj2bXkP2eci1021tZN0eTt/eQvjnkYPev0LgLBZtRx83j41FDkaXNe1+aO1+tr/I+I41xeXVcFFYWcHPnXw2va0ux/c9/wQR/aE8M/Hf8A4Jo+BNH0y4jbVvAcUnhjVLZSN0D2TH7OSOuJLVoZAcYySMkqa/WT4kfDzwf8XPh7rvwr+IVkuo6D4ksLnS9RtXJCzWt3G0UqEggjcjEZBBHUc1/lxfsB/wDBQb49f8E6/jGfir8F547qz1BEt9a0S8LfYtTtkJKrJt5SWMsxhmX5oyTwyM6P/aR+zx/wcm/8E7vixoFu/wAX7zVPhlrZAE1pqVnNfW2/HPlXVlHKGTsGljhY/wB0V4PFPB2Pw+NqYrB03OnJuS5dXFt3tZa6PZrp5nscOcU4PEYWFDEzUakVZ82idla99teqPx/+NP8AwaqftGad41uV/Zz+I/hzVvDckjtbf8JL9psL+GIn5I5Da211FMyjhpFEQYjIjXO0e4/s6f8ABqgtvq9trP7WPxQW5s48NLpPhW1MZkIIOPt11khD0IFqGIPDKa/abxJ/wXa/4JSeGdPfULn4t2l3tHEdnp+oXMjH0Cx2zfrgV+P/AO17/wAHS3g2y0u68L/sQ+C7nUNQcMi694nUQWsR7PFZxOZZvbzZIdpHKMOK7cNmfGGMiqFOEo9HJwUfxaS+7U5MRl/DGEk69SUX/dUnL8E/z0P6df2bv2YPgF+yL8NLf4P/ALOnhmz8MaHbt5rw2wLSzzMApmuJnLSzysFCmSV2chQM4UAe8TwrcQPbvkK6lTjrg8V/EV/wSc/4Lo/Db4IaX8S/Fn/BQLxV4i8R+MfGetW99DdxWn2tRbQweX5aqhSOCNWzshjRUUHgDJr9d/8AiJc/4Jk/8/fif/wTt/8AF181mXCecQxU4ulOo+s0m03a7d3vr1PoMBxFllTDwkqsYL+VtJr5dDzXxr/wbQf8E5/DfgnV9dsL3xiZ7CxuLiPdqkJG+KNmGf8ARemRzX8CNjdXCpDewO0UoCyK8ZKMrDkFSDkEHkEHIr/QQ8cf8HIv/BNTxD4K1jQLC78S+ffWNxbx7tIYDfJGyrk7+OTX+fXbRtFbRxP1VQD+Ar9S4HebOOI/tXnv7vLz3/vXtf5XPzrjJZanReXcn2r8tvK17fOx/o9f8EWf+CsHhL9vj4M2fww+JeoxW3xf8J2ccWrWspVH1aCIBBqNuBgNv4+0IgHlSn7qxvGW/cKWKOeNoZlDo4KsrDIIPUEV/j5+CPHHjP4aeLtO8f8Aw71a70LXNImFxZahYTNb3NvKuQGjkQhlOCQcHkEg5BIr+pz9jX/g6K+JfgfR7bwb+214RbxlHbqEHiHQPKtdRcDHM9o5jtpXPJLxyQDoNhOTXyvE3h7XjVlicrXNB68mzXpfRrst1tqfRcP8cUJ0o0MwfLNac3R+vZ/h6H7XftLf8G9P/BOD9orXrrxdpWh6j8O9VvX82eXwncpaW7v3ItJ4p7WMHuIYo89evNfF1t/wanfskrdFrz4m+M3g3cLGLBHC+m42zDPvt/Cvu34ff8HB3/BKrx3YR3F98Qbjw5cuu5rXVtJvopI/YvFDLCT/ALspFeg6t/wXR/4JSaNCZrr4wWMgAzi3sNQnY49o7VjXg0sXxVh0qMVWsu8ZP7m0z26mF4erN1ZeyfneK+/VHmvwB/4N8f8AgmR8CbqDVtR8I3Xj/ULf7s/i27N9G2f79pGsFm//AAO3NcT/AMHCf/COfDX/AIJGeKfAfhWyt9J0681LQNOtbO0iWCCNIr+G5CJGgVVUCAnAGOK8o+Nv/Bzz+wN4Bgmtvg/pXiT4g3gRjC8FoNMsmcdA8l4Y50B9Vtnx6V/L1/wUd/4LL/tOf8FHNMi+Hvi+z07wp4DtLxL630LTl853njVljkubuQeZKyB2AEawxnOTGWAYexkmQ59jMwoYzMObkhJS999neyi9V9yR5Wb53k+EwVbDYNx5pRatBd1a7a0/G5+U3hrTrfV/EmnaTdlhFdXUML7ThtsjhTg884PHFf6A+l/8GzX/AATm0fVLbV7O98Y+daTRzx7tUhI3RsGGR9l5GRzX+f14Xv7bSvE2m6peEiG2uoZpCBk7UcMcDucCv9Bk/wDBy5/wTJz/AMffif8A8E7f/F19Xxy845qCyvntaXNyX8rXt8z5rgxZZyVnmHJe8bc1vPa5/QFXxB+3Z/wT/wDgT/wUP+HOjfC/4+y6pDpmh6oNXtjpNwttKbhYZYMMzxyArslbjA5xzX5t/wDES5/wTJ/5+/E//gnb/wCLo/4iXP8AgmT/AM/fif8A8E7f/F1+U4fh/PKFSNajhqkZLZqLuj9JrZxlVaDp1a8HF7pyWp+Bn/Bcv/glF+y9/wAE6vhn4B8Xfs/z65Nd+JdVurK7GrXaXKCOGESLsCQx4OTySTxXV/8ABD7/AIJE/sp/8FD/ANnnxd8UPj7ca9DqWh+JX0m2Gk3iW0Rt1tLef5leGQlt8rc5Axjisf8A4Ltf8FTv2U/+ChXww+H/AIU/Z3n1WW88N6td3l4NRsjaqIpoQi7SWO47hyK6z/ghf/wVn/ZH/wCCff7OnjD4ZftCz6vFqmt+Jn1W2GnWJuozbtaW0PzMGGG3xNx6YNfp0pZ3/q4mvafWubz57c332t+B+fxjlH9vNPk9hy+XLey+Vz+tT9hL/gn18B/+Cd3w/wBa+GvwCm1WbTte1L+1bk6tcpcyCfyo4cKyRx4XbGvBB5zzX3HX8/n/ABEuf8Eyf+fvxP8A+Cdv/i6P+Ilz/gmT/wA/fif/AME7f/F1+ZYjIM8r1JVq2GqSk924u7P0CjnGVUYKnSrwUVslJaFLXP8Ag2h/4J0+IdbvfEGo33jD7Rf3EtzLt1SELvlYu2B9l4GTwK/z0baRpbaOVurKCfxFf6Hg/wCDlz/gmTn/AI+/E/8A4J2/+Lr/ADwraNoraOJ+qqAfwFfrHAv9r2xCzTn+xy89/wC9e1/lf5H5pxost/cvL+S/vc3Lb+7a9vmT0UUV9+fCnY2v/HtH/uj+VT1Ba/8AHtH/ALo/lU9Zmh//1/5xrr/j5k/3j/OoKlnZXnd05BYkVFX9eI/l9hRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAdja/8e0f+6P5VPVK3uLdbeNWkUEKO49Km+023/PRfzH+NRZmh//Q+V/+CrH/AATQ8MfsTfHXxbYeB/Er3+igtqthZSWflvbW93KpjtjKJm8zyllC+ZsXcF5UE1+M9f1qf8HFn/JbfEn/AGA7L/0O3r+Suv6Y4UxtbFZdTq15c0rLXTsux+BcU4OjhsdKnQjZdvmFFFFfSHzgUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAV9Ffs2fAB/2iPiLpXw+TVxox1S6+zC4Nv9p8v5d27Z5ke76bh9a+da/Rj/gmr/ycd4U/7Cv/ALTFcOZVp0sNUqU3ZpO33Ho5VQhWxUKdRXTZ/aJ4E/4N4v2A/DfgfRvDviq31PWdUsLG3trzUBMtuLu4ijVZJvKCv5fmMC2zc23OMnGa6v8A4h/P+Ccv/QE1T/wMX/43X7Y0V/On+tub/wDQTL8P8j91/wBXct/58L8T/9k=";
+  document.getElementById('logoImg').src = 'data:image/jpeg;base64,' + MAEIL_LOGO_B64;
+</script>
+
+<!-- ===== App Logic ===== -->
+<script>
+/* ==========================================================
+   매일유업 고객 VOC 자산화 에이전트 v4
+   설계 원칙: "Less but Real" — 품질 우선, 수량 타협
+   ========================================================== */
+
+const MODELS_TO_TRY = [
+  'claude-opus-4-5-20250929',
+  'claude-sonnet-4-5-20250929',
+  'claude-sonnet-4-20250514'
+];
+
+const CATEGORY_LABELS = {
+  taste: '🥛 맛·풍미',
+  quality: '🧪 품질·신선도',
+  package: '📦 포장·용기',
+  price: '💰 가격·용량',
+  health: '🏥 건강·영양',
+  purchase: '🛒 구매·유통',
+  brand: '💬 브랜드·CS'
+};
+
+const SENTIMENT_LABELS = {
+  positive: { ko: '긍정', color: '#1F6B4C' },
+  neutral:  { ko: '중립', color: '#6B7689' },
+  negative: { ko: '부정', color: '#A8342A' }
+};
+
+const SEVERITY_LABELS = {
+  high:   '🔴 높음',
+  medium: '🟡 중간',
+  low:    '⚪ 낮음'
+};
+
+const SOURCE_LABELS = {
+  blog: '블로그',
+  community: '커뮤니티',
+  youtube: '유튜브'
+};
+
+const PHASE_LABELS = {
+  positive:  '긍정',
+  negative:  '부정',
+  community: '커뮤니티',
+  youtube:   '유튜브'
+};
+
+const CSV_HEADERS = [
+  'voc_id', 'source_type', 'source_name', 'source_url',
+  'collected_date', 'original_date',
+  'original_quote', 'utterance_evidence',
+  'sentiment', 'sentiment_score',
+  'category_primary', 'category_secondary',
+  'keywords', 'content_summary', 'actionable_insight',
+  'severity', 'is_repeat_issue'
+];
+
+const SCHEMA_DOC = `{
+  "metadata": {
+    "product_name": "string — 제품명",
+    "product_category": "string — 카테고리 (요거트/커피음료 등)",
+    "brand": "string — 브랜드명",
+    "collection_id": "string — MDV-YYYYMMDD-NNN",
+    "collected_at": "string — ISO 8601",
+    "analysis_version": "\\"v4.0\\"",
+    "total_voc_count": "number — voc_records 길이와 일치",
+    "source_breakdown": {
+      "blog": "number",
+      "community": "number",
+      "youtube": "number"
+    }
+  },
+
+  "data_provenance": {
+    "search_queries_executed": [
+      {
+        "query": "실제 실행된 검색어",
+        "yielded_vocs": "이 쿼리로 수집된 VOC 수",
+        "phase": "positive | negative | community | youtube"
+      }
+    ],
+    "accessed_domains": [
+      { "domain": "blog.naver.com", "voc_count": 5 }
+    ],
+    "excluded_sources": [
+      "쇼핑몰 리뷰(스니펫 신뢰도 부족)",
+      "SNS(크롤링 정책상 불가)",
+      "뉴스(VOC 아님, market_context로 분리)"
+    ],
+    "methodology_note": "수집 방법과 한계 설명 3~4문장",
+    "coverage_period_estimate": "예: '최근 12개월 이내 게시물 중심'"
+  },
+
+  "aggregation": {
+    "sentiment_distribution": { "positive": 10, "neutral": 4, "negative": 6 },
+    "category_distribution": {
+      "taste": 0, "quality": 0, "package": 0, "price": 0,
+      "health": 0, "purchase": 0, "brand": 0
+    },
+    "top_keywords": [
+      { "keyword": "고소함", "count": 5, "sentiment": "positive" }
+    ]
+  },
+
+  "insights": {
+    "pain_points":   [{ "title": "", "description": "", "related_voc_ids": [], "severity": "high|medium|low" }],
+    "strengths":     [{ "title": "", "description": "", "related_voc_ids": [] }],
+    "opportunities": [{ "title": "", "description": "" }],
+    "risks":         [{ "title": "", "description": "", "urgency": "high|medium|low" }]
+  },
+
+  "voc_records": [
+    {
+      "voc_id":              "MDV-YYYYMMDD-001-001",
+      "source_type":         "blog | community | youtube",
+      "source_name":         "네이버 블로그 / 맘스홀릭 / 클리앙 등",
+      "source_url":          "화이트리스트 도메인의 실제 URL",
+      "collected_date":      "YYYY-MM-DD",
+      "original_date":       "YYYY-MM-DD (확인 가능시)",
+      "original_quote":      "[필수·핵심] 실제 원문에서 인용한 소비자 발화",
+      "utterance_evidence":  "왜 1인칭 소비자 발화인지 근거",
+      "sentiment":           "positive | neutral | negative",
+      "sentiment_score":     -1.0,
+      "category_primary":    "taste | quality | package | price | health | purchase | brand",
+      "category_secondary":  "한국어 세부 태그",
+      "keywords":            ["2~5개 원문 단어"],
+      "content_summary":     "1~2문장 요약",
+      "actionable_insight":  "실행 시사점 1문장",
+      "severity":            "high | medium | low",
+      "is_repeat_issue":     false,
+      "promotional_flags": {
+        "has_sponsorship_mark":   false,
+        "has_compensation_notice": false,
+        "is_review_campaign":     false
+      }
+    }
+  ],
+
+  "market_context": [
+    {
+      "type": "news | pr | trend_article",
+      "title": "기사 제목",
+      "source_name": "매체명",
+      "source_url": "URL",
+      "date": "YYYY-MM-DD",
+      "summary": "1~2문장 요약",
+      "relevance_to_voc": "VOC 해석에 왜 관련 있는지"
+    }
+  ]
+}`;
+
+let currentData = null;
+let activeFilter = 'all';
+let currentAssetView = 'json';
+let chartInstances = {};
+
+/* ----- Helpers ----- */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function showToast(msg) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function showError(msg) {
+  const e = $('#errorCard');
+  e.textContent = msg;
+  e.classList.add('show');
+}
+function clearError() { $('#errorCard').classList.remove('show'); }
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function percent(n, total) {
+  if (!total) return 0;
+  return Math.round((n || 0) / total * 100);
+}
+
+/* ----- API Key ----- */
+(function initApiKey() {
+  const saved = localStorage.getItem('maeil_voc_api_key');
+  if (saved) {
+    $('#apiKeyInput').value = saved;
+    $('#apiDetails').open = false;
+  } else {
+    $('#apiDetails').open = true;
+  }
+})();
+
+$('#saveKeyBtn').addEventListener('click', () => {
+  const key = $('#apiKeyInput').value.trim();
+  if (key) {
+    localStorage.setItem('maeil_voc_api_key', key);
+    showToast('API 키가 저장되었습니다');
+  }
+});
+
+/* ----- Example chips ----- */
+$$('.example-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    $('#productInput').value = chip.dataset.example;
+    $('#productInput').focus();
+  });
+});
+
+/* ==========================================================
+   System Prompt — v4 "Less but Real"
+   ========================================================== */
+function buildSystemPrompt() {
+  return `당신은 매일유업의 고객 VOC(Voice of Customer) 데이터를 자산화하는 전문 에이전트입니다.
+이 데이터는 경영진 의사결정의 근거가 되므로, **진실성과 검증 가능성**이 무엇보다 중요합니다.
+
+=================================================================
+[절대 원칙] — 어기면 데이터는 폐기됩니다
+=================================================================
+
+원칙 1. 환각 금지
+- 실제 web_search 결과에 명시적으로 등장한 내용만 기록합니다
+- "있을 법한" 반응을 생성하지 않습니다
+- 정보가 부족하면 적은 건수로 정직하게 반환합니다
+
+원칙 2. VOC의 엄격한 정의
+VOC = "제품을 실제로 구매·사용한 개인 소비자가 작성한 1인칭 발화"
+
+VOC에 해당하는 것 (✅):
+- "먹어봤는데 생각보다 시큼했어요" (개인 경험)
+- "재구매 의사 있어요" (주관적 평가)
+- "뚜껑이 너무 빡빡해서 불편" (구체적 불만)
+- "아침마다 먹고 있어요" (사용 사실 명시)
+
+VOC가 아닌 것 (❌):
+- 제품 상세페이지의 스펙/성분 설명 ("단백질 28g 함유")
+- 마케팅 문구/클린라벨 문구 ("무첨가, 프리미엄")
+- 기자가 작성한 제품 소개 기사
+- 보도자료 기반 뉴스
+- 쇼핑몰 UI 요소 (평점 숫자, 재입고 알림)
+- 가격비교 사이트의 시스템 데이터
+- 브랜드 공식 블로그/SNS 콘텐츠
+- 협찬/체험단/원고료 받은 블로그 포스팅
+
+원칙 3. 4단계 VOC 판별 게이트
+각 후보 텍스트에 대해 다음 4개를 모두 만족해야 VOC로 기록합니다:
+  CHECK-1: 작성자가 "나는 ~했다"식 주관적 경험을 진술했는가?
+  CHECK-2: 제품 구매 또는 사용 사실이 명시/암시되는가?
+  CHECK-3: 작성자가 브랜드 관계자/기자/마케터가 아닌가?
+  CHECK-4: 협찬·원고료·체험단 표기가 없는가?
+4개 모두 YES일 때만 VOC로 기록하세요. 하나라도 NO면 제외합니다.
+
+=================================================================
+[소스 화이트리스트] — 이 외 도메인은 VOC 소스로 사용 금지
+=================================================================
+
+허용 도메인 (이 범위에서만 수집):
+
+📝 개인 블로그
+  - blog.naver.com, m.blog.naver.com
+  - tistory.com, *.tistory.com
+  - brunch.co.kr
+
+💬 커뮤니티
+  - cafe.naver.com (단, 협찬 카페글 주의)
+  - cafe.daum.net
+  - dcinside.com, gall.dcinside.com
+  - clien.net
+  - ppomppu.co.kr, ppomppu.com
+  - theqoo.net
+  - 82cook.com
+  - mizinae.net
+  - momsholic.com
+  - ruliweb.com
+  - fmkorea.com
+  - bobaedream.co.kr (생활/식품 게시판 한정)
+
+🎥 유튜브 (설명·고정댓글만)
+  - youtube.com (단, 브랜드 공식 채널 제외)
+
+❌ 명시적 제외 (절대 VOC로 기록 금지):
+  - 쿠팡·SSG·마켓컬리·11번가·G마켓 등 쇼핑몰 (스니펫 신뢰도 부족)
+  - 모든 뉴스 사이트 (기자 발화이지 VOC 아님)
+  - 인스타그램·페이스북·트위터/X·틱톡 (크롤링 불가)
+  - 가격비교 사이트 (다나와, 에누리 등)
+  - 제품 상세페이지 (마케팅 문구)
+  - 브랜드 공식 블로그/SNS
+
+주의: 뉴스 기사는 VOC는 아니지만 "시장 맥락(market_context)"으로 별도 섹션에 기록 가능합니다.
+
+=================================================================
+[검색 전략] — 최소 6~10회의 web_search 필수
+=================================================================
+
+Phase 1. 긍정/중립 탐색 (3~4회)
+  - "{제품명} 후기 블로그"
+  - "{제품명} 먹어본"
+  - "{제품명} 솔직후기"
+  - "{제품명} 재구매"
+
+Phase 2. 부정 강제 탐색 (2~3회, 필수)
+  부정 VOC가 전체의 20% 미만이면 추가 검색을 반복합니다.
+  - "{제품명} 맛없"
+  - "{제품명} 실망"
+  - "{제품명} 별로"
+  - "{제품명} 환불"
+  - "{제품명} 후회"
+
+Phase 3. 커뮤니티 타겟 탐색 (2~3회)
+  - "{제품명} 맘스홀릭"
+  - "{제품명} 디시"
+  - "{제품명} 클리앙"
+  - "{제품명} 82cook"
+  - "{제품명} 더쿠"
+
+Phase 4. 유튜브 리뷰 탐색 (1회)
+  - "{제품명} 시식 리뷰 youtube"
+
+=================================================================
+[출력 형식] — 순수 JSON 객체 하나만 출력
+=================================================================
+
+- 반드시 JSON 객체 하나만 출력하세요 (설명/코드펜스/마크다운 금지)
+- 모든 자연어는 한국어
+- enum 필드는 지정된 소문자 영문 값만 사용
+
+=================================================================
+[JSON 스키마]
+=================================================================
+
+{
+  "metadata": {
+    "product_name": string,
+    "product_category": string,
+    "brand": string,
+    "collection_id": string,
+    "collected_at": string,
+    "analysis_version": "v4.0",
+    "total_voc_count": number,
+    "source_breakdown": { "blog": number, "community": number, "youtube": number }
+  },
+  "data_provenance": {
+    "search_queries_executed": [
+      { "query": string, "yielded_vocs": number, "phase": "positive"|"negative"|"community"|"youtube" }
+    ],
+    "accessed_domains": [ { "domain": string, "voc_count": number } ],
+    "excluded_sources": string[],
+    "methodology_note": string,
+    "coverage_period_estimate": string
+  },
+  "aggregation": {
+    "sentiment_distribution": { "positive": number, "neutral": number, "negative": number },
+    "category_distribution": {
+      "taste": number, "quality": number, "package": number,
+      "price": number, "health": number, "purchase": number, "brand": number
+    },
+    "top_keywords": [ { "keyword": string, "count": number, "sentiment": "positive"|"neutral"|"negative" } ]
+  },
+  "insights": {
+    "pain_points":   [{ "title": string, "description": string, "related_voc_ids": string[], "severity": "high"|"medium"|"low" }],
+    "strengths":     [{ "title": string, "description": string, "related_voc_ids": string[] }],
+    "opportunities": [{ "title": string, "description": string }],
+    "risks":         [{ "title": string, "description": string, "urgency": "high"|"medium"|"low" }]
+  },
+  "voc_records": [
+    {
+      "voc_id": string,
+      "source_type": "blog"|"community"|"youtube",
+      "source_name": string,
+      "source_url": string,
+      "collected_date": string,
+      "original_date": string,
+      "original_quote": string,
+      "utterance_evidence": string,
+      "sentiment": "positive"|"neutral"|"negative",
+      "sentiment_score": number,
+      "category_primary": "taste"|"quality"|"package"|"price"|"health"|"purchase"|"brand",
+      "category_secondary": string,
+      "keywords": string[],
+      "content_summary": string,
+      "actionable_insight": string,
+      "severity": "high"|"medium"|"low",
+      "is_repeat_issue": boolean,
+      "promotional_flags": {
+        "has_sponsorship_mark": boolean,
+        "has_compensation_notice": boolean,
+        "is_review_campaign": boolean
+      }
+    }
+  ],
+  "market_context": [
+    {
+      "type": "news"|"pr"|"trend_article",
+      "title": string,
+      "source_name": string,
+      "source_url": string,
+      "date": string,
+      "summary": string,
+      "relevance_to_voc": string
+    }
+  ]
+}
+
+=================================================================
+[불변 규칙]
+=================================================================
+
+1. voc_records 길이 = metadata.total_voc_count
+2. source_breakdown 합계 = total_voc_count
+3. sentiment_distribution 합계 = total_voc_count
+4. category_distribution 합계 = total_voc_count
+5. 모든 voc_records[].source_url은 화이트리스트 도메인이어야 함
+6. 모든 voc_records[].original_quote는 비어있지 않아야 함
+7. promotional_flags의 3개 값이 모두 false인 VOC만 기록
+8. pain_points/strengths의 related_voc_ids는 voc_records에 실제 존재하는 ID
+9. 검색 결과가 적으면 적은 건수로 반환 (억지로 채우지 않음)
+10. 부정 VOC 비율이 20% 미만이면 부정 탐색을 추가로 수행
+
+목표 수량: 10~30건 (품질 우선, 수량은 타협 가능)`;
+}
+
+function buildUserPrompt(productName) {
+  const today = new Date().toISOString().slice(0, 10);
+  return `매일유업 제품 "${productName}"에 대해 VOC 조사를 수행하고 스키마대로 정규화된 JSON을 반환해주세요.
+
+오늘 날짜: ${today}
+collection_id: MDV-${today.replace(/-/g, '')}-001
+
+조사 절차:
+1. Phase 1~4를 모두 수행하여 최소 6~10회의 web_search 실행
+2. 각 검색 결과에서 "개인 블로그·커뮤니티·유튜브" 화이트리스트 도메인의 콘텐츠만 수집
+3. 각 후보 텍스트에 4단계 VOC 판별 게이트 적용
+4. 4개 CHECK 모두 통과한 항목만 voc_records에 기록
+5. 협찬/체험단 표기가 있는 포스팅은 자동 배제
+6. 뉴스 기사는 VOC로 기록하지 말고 market_context에 별도 기록
+7. data_provenance에 실행한 모든 검색과 접근 도메인을 투명하게 기록
+
+반드시 JSON 객체 하나만 출력. 앞뒤 설명 금지.`;
+}
+
+/* ==========================================================
+   API Call
+   ========================================================== */
+async function callClaudeAPI(apiKey, productName, onStep) {
+  const body = {
+    model: MODELS_TO_TRY[0],
+    max_tokens: 16000,
+    system: buildSystemPrompt(),
+    messages: [{ role: 'user', content: buildUserPrompt(productName) }],
+    tools: [
+      { type: 'web_search_20250305', name: 'web_search', max_uses: 10 }
+    ]
+  };
+
+  let lastErr = null;
+  for (const model of MODELS_TO_TRY) {
+    body.model = model;
+    try {
+      onStep(1);
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify(body)
+      });
+
+      onStep(3);
+
+      if (!res.ok) {
+        const errText = await res.text();
+        let errJson = {};
+        try { errJson = JSON.parse(errText); } catch(_) {}
+        const msg = errJson?.error?.message || errText;
+        if (res.status === 404 || /model/i.test(msg)) {
+          lastErr = new Error(`[${model}] ${msg}`);
+          continue;
+        }
+        throw new Error(`API 오류 (${res.status}): ${msg}`);
+      }
+
+      onStep(4);
+      const data = await res.json();
+      const jsonText = extractFinalText(data);
+      onStep(5);
+      const parsed = parseJsonFromText(jsonText);
+      return parsed;
+    } catch (e) {
+      lastErr = e;
+      if (!/model/i.test(String(e.message))) throw e;
+    }
+  }
+  throw lastErr || new Error('모든 모델에서 응답 실패');
+}
+
+function extractFinalText(response) {
+  const blocks = (response?.content || []).filter(b => b.type === 'text');
+  if (blocks.length === 0) throw new Error('응답에 텍스트가 없습니다');
+  return blocks[blocks.length - 1].text || '';
+}
+
+function parseJsonFromText(text) {
+  let t = text.trim();
+  t = t.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+  const s = t.indexOf('{');
+  const e = t.lastIndexOf('}');
+  if (s !== -1 && e !== -1) t = t.slice(s, e + 1);
+  try { return JSON.parse(t); }
+  catch (err) {
+    console.error('JSON parse failed. Raw:', text);
+    throw new Error('응답 JSON 파싱에 실패했습니다. 다시 시도해주세요.');
+  }
+}
+
+/* ----- Loading UI ----- */
+function setLoadingStep(stepNum) {
+  $$('.loading-step').forEach(el => {
+    const n = parseInt(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (n < stepNum) el.classList.add('done');
+    else if (n === stepNum) el.classList.add('active');
+  });
+}
+
+/* ----- Analyze flow ----- */
+$('#analyzeBtn').addEventListener('click', runAnalysis);
+$('#productInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') runAnalysis();
+});
+
+async function runAnalysis() {
+  clearError();
+  const product = $('#productInput').value.trim();
+  const apiKey = $('#apiKeyInput').value.trim();
+
+  if (!product) { showError('제품명을 입력해주세요.'); return; }
+  if (!apiKey) {
+    $('#apiDetails').open = true;
+    showError('API 키가 필요합니다. "API 키 설정"에서 입력해주세요.');
+    return;
+  }
+
+  $('#inputSection').style.display = 'none';
+  $('#loadingSection').classList.add('show');
+  $('#resultsSection').classList.remove('show');
+  setLoadingStep(1);
+  $('#loadingSub').textContent = `"${product}"의 개인 1인칭 발화를 검색·검증합니다`;
+
+  // Gradual step progress simulation
+  const stepTimers = [
+    setTimeout(() => setLoadingStep(2), 8000),
+    setTimeout(() => setLoadingStep(3), 30000),
+    setTimeout(() => setLoadingStep(4), 60000)
+  ];
+
+  try {
+    const data = await callClaudeAPI(apiKey, product, setLoadingStep);
+    stepTimers.forEach(clearTimeout);
+    currentData = data;
+    renderResults(data);
+    $('#loadingSection').classList.remove('show');
+    $('#resultsSection').classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    stepTimers.forEach(clearTimeout);
+    console.error(err);
+    $('#loadingSection').classList.remove('show');
+    $('#inputSection').style.display = 'block';
+    showError(`분석 중 오류가 발생했습니다: ${err.message}`);
+  }
+}
+
+$('#newAnalysis').addEventListener('click', () => {
+  $('#resultsSection').classList.remove('show');
+  $('#inputSection').style.display = 'block';
+  $('#productInput').value = '';
+  $('#productInput').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+/* ==========================================================
+   Rendering
+   ========================================================== */
+function renderResults(data) {
+  renderMeta(data);
+  renderProvenance(data);
+  renderTabs(data);
+  renderSentiment(data);
+  renderCharts(data);
+  renderKeywords(data);
+  renderInsights(data);
+  renderVocs(data);
+  renderMarketContext(data);
+  renderDataAsset(data);
+  renderExportBar(data);
+}
+
+/* ----- Meta card ----- */
+function renderMeta(data) {
+  const m = data.metadata || {};
+  const total = m.total_voc_count || (data.voc_records?.length || 0);
+  const sb = m.source_breakdown || {};
+  const sourceTypes = Object.keys(sb).filter(k => sb[k] > 0).length;
+  const mc = (data.market_context || []).length;
+
+  const dateStr = m.collected_at ? new Date(m.collected_at).toLocaleString('ko-KR', {
+    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
+  }) : new Date().toLocaleString('ko-KR');
+
+  const posPct = percent(data.aggregation?.sentiment_distribution?.positive, total);
+
+  $('#metaCard').innerHTML = `
+    <div class="meta-card-header">
+      <div class="meta-card-header-left">
+        <div class="meta-card-eyebrow">${escapeHtml(m.product_category || 'VOC Analysis')}${m.brand ? ' · ' + escapeHtml(m.brand) : ''}</div>
+        <h2 class="meta-card-title">${escapeHtml(m.product_name || '제품')}</h2>
+        <div class="meta-card-sub">${dateStr} · Collection ID: ${escapeHtml(m.collection_id || '-')}</div>
+      </div>
+      <div class="meta-card-badge">
+        <span class="meta-card-badge-dot"></span>
+        Analysis Complete
+      </div>
+    </div>
+    <div class="meta-stats">
+      <div class="meta-stat">
+        <div class="meta-stat-label">Total VOC</div>
+        <div class="meta-stat-value">${total}<span class="meta-stat-unit">건</span></div>
+      </div>
+      <div class="meta-stat">
+        <div class="meta-stat-label">수집 소스</div>
+        <div class="meta-stat-value">${sourceTypes}<span class="meta-stat-unit">종</span></div>
+      </div>
+      <div class="meta-stat">
+        <div class="meta-stat-label">긍정 비율</div>
+        <div class="meta-stat-value">${posPct}<span class="meta-stat-unit">%</span></div>
+      </div>
+      <div class="meta-stat">
+        <div class="meta-stat-label">시장 맥락</div>
+        <div class="meta-stat-value">${mc}<span class="meta-stat-unit">건</span></div>
+      </div>
+    </div>
+  `;
+}
+
+/* ----- Data Provenance ----- */
+function renderProvenance(data) {
+  const p = data.data_provenance || {};
+  const queries = p.search_queries_executed || [];
+  const domains = p.accessed_domains || [];
+  const excluded = p.excluded_sources || [];
+  const methodNote = p.methodology_note || '-';
+  const period = p.coverage_period_estimate || '-';
+
+  const queryHTML = queries.length
+    ? queries.map(q => `
+        <li class="prov-query-item">
+          <span class="prov-query-phase ${q.phase || 'positive'}">${PHASE_LABELS[q.phase] || q.phase || '-'}</span>
+          <span class="prov-query-text">${escapeHtml(q.query || '-')}</span>
+          <span class="prov-query-count">+${q.yielded_vocs || 0}</span>
+        </li>
+      `).join('')
+    : '<li style="font-size:12px; color:var(--text-tertiary);">기록된 검색 없음</li>';
+
+  const domainHTML = domains.length
+    ? domains.map(d => `
+        <span class="prov-domain">
+          ${escapeHtml(d.domain)} <span class="prov-domain-count mono">${d.voc_count || 0}</span>
+        </span>
+      `).join('')
+    : '<span class="muted" style="font-size:12px;">기록된 도메인 없음</span>';
+
+  const excludedHTML = excluded.length
+    ? excluded.map(e => `<span class="prov-exclude-chip">${escapeHtml(e)}</span>`).join('')
+    : '<span class="muted" style="font-size:12px;">-</span>';
+
+  $('#provenanceCard').innerHTML = `
+    <div class="provenance-head">
+      <div class="provenance-icon">◈</div>
+      <div class="provenance-title">데이터 출처 투명성 (Data Provenance)</div>
+      <div class="provenance-subtitle">수집 경로 · 방법론 · 한계 명시</div>
+    </div>
+    <div class="provenance-grid">
+      <div class="prov-block">
+        <h4>실행된 검색 쿼리 (${queries.length}회)</h4>
+        <ul class="prov-query-list">${queryHTML}</ul>
+      </div>
+      <div class="prov-block">
+        <h4>접근한 도메인</h4>
+        <div class="prov-domain-list">${domainHTML}</div>
+        <h4 style="margin-top:16px;">명시적 제외 소스</h4>
+        <div class="prov-excluded">${excludedHTML}</div>
+        <h4 style="margin-top:16px;">수집 기간</h4>
+        <div style="font-size:12.5px; color:var(--text-secondary);">${escapeHtml(period)}</div>
+      </div>
+    </div>
+    <div class="prov-method" style="margin-top: 20px;">
+      <strong style="color:var(--text); font-weight:700;">📘 방법론 노트 · </strong>${escapeHtml(methodNote)}
+    </div>
+  `;
+}
+
+/* ----- Main tabs ----- */
+function renderTabs(data) {
+  const vocCount = (data.voc_records || []).length;
+  const marketCount = (data.market_context || []).length;
+  $('#tabVocCount').textContent = vocCount;
+  $('#tabMarketCount').textContent = marketCount;
+
+  $$('.main-tab').forEach(btn => {
+    btn.onclick = () => {
+      $$('.main-tab').forEach(b => b.classList.toggle('active', b === btn));
+      $$('.tab-panel').forEach(p => p.classList.remove('active'));
+      $('#panel' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add('active');
+    };
+  });
+}
+
+/* ----- Sentiment ----- */
+function renderSentiment(data) {
+  const s = data.aggregation?.sentiment_distribution || { positive:0, neutral:0, negative:0 };
+  const total = (s.positive || 0) + (s.neutral || 0) + (s.negative || 0);
+  const bar = $('#sentimentBar');
+  bar.innerHTML = '';
+
+  if (total === 0) {
+    bar.innerHTML = '<div class="sentiment-segment" style="width:100%; background: var(--border);"></div>';
+  } else {
+    [['positive', s.positive], ['neutral', s.neutral], ['negative', s.negative]].forEach(([k, v]) => {
+      if (!v) return;
+      const seg = document.createElement('div');
+      seg.className = 'sentiment-segment';
+      seg.style.width = ((v || 0) / total * 100) + '%';
+      seg.style.background = SENTIMENT_LABELS[k].color;
+      bar.appendChild(seg);
+    });
+  }
+
+  $('#sentimentLegend').innerHTML = [
+    ['positive', s.positive], ['neutral', s.neutral], ['negative', s.negative]
+  ].map(([k, v]) => `
+    <div class="legend-item">
+      <div class="legend-header">
+        <span class="legend-dot" style="background: ${SENTIMENT_LABELS[k].color};"></span>
+        <span class="legend-label">${SENTIMENT_LABELS[k].ko}</span>
+      </div>
+      <div class="legend-value">
+        ${v || 0}<span class="legend-percent">(${percent(v, total)}%)</span>
+      </div>
+    </div>
+  `).join('');
+
+  $('#sentimentSubtitle').textContent = `총 ${total}건`;
+}
+
+/* ----- Charts ----- */
+function renderCharts(data) {
+  Object.values(chartInstances).forEach(c => c.destroy && c.destroy());
+  chartInstances = {};
+
+  const catDist = data.aggregation?.category_distribution || {};
+  const catEntries = Object.entries(catDist).filter(([k, v]) => v > 0);
+  const catLabels = catEntries.map(([k, _]) => CATEGORY_LABELS[k] || k);
+  const catValues = catEntries.map(([_, v]) => v);
+
+  const chartFont = "'Pretendard Variable', -apple-system, sans-serif";
+
+  if (catValues.length > 0) {
+    chartInstances.cat = new Chart($('#categoryChart'), {
+      type: 'bar',
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catValues,
+          backgroundColor: '#00448B',
+          borderRadius: 5,
+          barThickness: 16
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, grid: { color: '#E8EDF3' },
+               ticks: { precision: 0, color: '#8B95A7', font: { family: chartFont, size: 11 } } },
+          y: { grid: { display: false },
+               ticks: { color: '#0A1F3D', font: { family: chartFont, size: 12, weight: '500' } } }
+        }
+      }
+    });
+  } else {
+    $('#categoryChart').parentElement.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-tertiary); font-size:13px;">데이터 없음</div>';
+  }
+
+  const srcDist = data.metadata?.source_breakdown || {};
+  const srcEntries = Object.entries(srcDist).filter(([k, v]) => v > 0);
+  if (srcEntries.length > 0) {
+    chartInstances.src = new Chart($('#sourceChart'), {
+      type: 'doughnut',
+      data: {
+        labels: srcEntries.map(([k, _]) => SOURCE_LABELS[k] || k),
+        datasets: [{
+          data: srcEntries.map(([_, v]) => v),
+          backgroundColor: ['#00448B', '#3B78BE', '#6B9DD0', '#A4C2E2'],
+          borderColor: '#FFFFFF',
+          borderWidth: 3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              font: { family: chartFont, size: 12 },
+              color: '#0A1F3D',
+              usePointStyle: true, pointStyle: 'circle',
+              padding: 10, boxWidth: 8
+            }
+          }
+        }
+      }
+    });
+  } else {
+    $('#sourceChart').parentElement.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-tertiary); font-size:13px;">데이터 없음</div>';
+  }
+}
+
+/* ----- Keywords ----- */
+function renderKeywords(data) {
+  const kw = data.aggregation?.top_keywords || [];
+  $('#keywordSubtitle').textContent = `${kw.length}개 키워드`;
+  $('#keywordCloud').innerHTML = kw.length
+    ? kw.map(k => `
+        <div class="keyword-chip ${k.sentiment === 'negative' ? 'negative' : ''}"
+             title="${SENTIMENT_LABELS[k.sentiment]?.ko || ''}">
+          ${escapeHtml(k.keyword)}<span class="count">${k.count || 0}</span>
+        </div>
+      `).join('')
+    : '<span class="muted" style="font-size:13px;">수집된 키워드 없음</span>';
+}
+
+/* ----- Insights ----- */
+function renderInsights(data) {
+  const ins = data.insights || {};
+
+  $('#painList').innerHTML = (ins.pain_points || []).length
+    ? (ins.pain_points || []).map((p, i) => `
+      <li class="insight-item">
+        <span class="insight-rank">${i+1}</span>
+        <div class="insight-body">
+          <div class="insight-text"><strong>${escapeHtml(p.title)}</strong> — ${escapeHtml(p.description || '')}</div>
+          <div class="insight-meta">
+            <span class="badge ${p.severity || 'medium'}">${SEVERITY_LABELS[p.severity] || ''}</span>
+            ${renderVocLinks(p.related_voc_ids)}
+          </div>
+        </div>
+      </li>
+    `).join('')
+    : '<li class="muted" style="font-size:13px;">수집된 불만 없음</li>';
+
+  $('#strengthList').innerHTML = (ins.strengths || []).length
+    ? (ins.strengths || []).map((p, i) => `
+      <li class="insight-item">
+        <span class="insight-rank">${i+1}</span>
+        <div class="insight-body">
+          <div class="insight-text"><strong>${escapeHtml(p.title)}</strong> — ${escapeHtml(p.description || '')}</div>
+          <div class="insight-meta">${renderVocLinks(p.related_voc_ids)}</div>
+        </div>
+      </li>
+    `).join('')
+    : '<li class="muted" style="font-size:13px;">수집된 강점 없음</li>';
+
+  $('#opportunityList').innerHTML = (ins.opportunities || []).length
+    ? (ins.opportunities || []).map((p, i) => `
+      <li class="insight-item">
+        <span class="insight-rank">${i+1}</span>
+        <div class="insight-body">
+          <div class="insight-text"><strong>${escapeHtml(p.title)}</strong> — ${escapeHtml(p.description || '')}</div>
+        </div>
+      </li>
+    `).join('')
+    : '<li class="muted" style="font-size:13px;">도출된 기회 없음</li>';
+
+  $('#riskList').innerHTML = (ins.risks || []).length
+    ? (ins.risks || []).map((p, i) => `
+      <li class="insight-item">
+        <span class="insight-rank">${i+1}</span>
+        <div class="insight-body">
+          <div class="insight-text"><strong>${escapeHtml(p.title)}</strong> — ${escapeHtml(p.description || '')}</div>
+          <div class="insight-meta"><span class="badge ${p.urgency || 'medium'}">긴급도 ${SEVERITY_LABELS[p.urgency] || ''}</span></div>
+        </div>
+      </li>
+    `).join('')
+    : '<li class="muted" style="font-size:13px;">감지된 리스크 없음</li>';
+}
+
+function renderVocLinks(ids) {
+  if (!Array.isArray(ids) || ids.length === 0) return '';
+  return '근거: ' + ids.map(id =>
+    `<a onclick="scrollToVoc('${escapeHtml(id)}')">${escapeHtml(id.split('-').pop())}</a>`
+  ).join(' ');
+}
+
+window.scrollToVoc = function(id) {
+  // Switch to VOC tab if not active
+  const vocTab = document.querySelector('.main-tab[data-tab="voc"]');
+  if (vocTab && !vocTab.classList.contains('active')) vocTab.click();
+
+  setTimeout(() => {
+    const el = document.querySelector(`[data-voc-id="${id}"].voc-card`);
+    if (!el) return;
+    el.classList.add('expanded');
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.style.boxShadow = '0 0 0 4px rgba(0, 68, 139, 0.25), var(--s-lg)';
+    setTimeout(() => { el.style.boxShadow = ''; }, 1400);
+  }, 100);
+};
+
+/* ----- VOC Records ----- */
+function renderVocs(data) {
+  const recs = data.voc_records || [];
+  $('#vocCountSub').textContent = recs.length
+    ? `${recs.length}건 · 탭하여 상세 확인`
+    : '수집된 VOC 없음';
+
+  if (recs.length === 0) {
+    $('#vocFilters').innerHTML = '';
+    $('#vocList').innerHTML = `
+      <div style="text-align:center; padding:60px 20px; background:var(--surface); border:1px dashed var(--border); border-radius:var(--r); color:var(--text-tertiary);">
+        <div style="font-size:32px; margin-bottom:12px; opacity:0.4;">📭</div>
+        <div style="font-size:14px; font-weight:600; color:var(--text-secondary); margin-bottom:6px;">검증된 VOC가 없습니다</div>
+        <div style="font-size:12.5px; line-height:1.5;">
+          이번 검색에서는 1인칭 발화 검증 게이트를 통과한 VOC를 찾지 못했습니다.<br>
+          제품명을 다르게 입력하거나 일정 시간 후 재시도해 보세요.
+        </div>
+      </div>`;
+    return;
+  }
+
+  const sentimentsPresent = [...new Set(recs.map(r => r.sentiment))];
+  const catsPresent = [...new Set(recs.map(r => r.category_primary))];
+  const filters = [
+    { key: 'all', label: '전체' },
+    ...(sentimentsPresent.includes('negative') ? [{ key: 'sentiment:negative', label: '부정만' }] : []),
+    ...(sentimentsPresent.includes('positive') ? [{ key: 'sentiment:positive', label: '긍정만' }] : []),
+    ...(recs.some(r => r.severity === 'high') ? [{ key: 'severity:high', label: '🔴 중요도 높음' }] : []),
+    ...catsPresent.map(c => ({ key: 'category:' + c, label: CATEGORY_LABELS[c] || c }))
+  ];
+
+  $('#vocFilters').innerHTML = filters.map(f => `
+    <button class="filter-chip ${activeFilter === f.key ? 'active' : ''}" data-filter="${f.key}">${f.label}</button>
+  `).join('');
+
+  $$('.filter-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.filter;
+      $$('.filter-chip').forEach(b => b.classList.toggle('active', b.dataset.filter === activeFilter));
+      applyFilter();
+    });
+  });
+
+  $('#vocList').innerHTML = recs.map(r => vocCardHTML(r)).join('');
+  attachVocCardHandlers();
+  applyFilter();
+}
+
+function vocCardHTML(r) {
+  const shortId = (r.voc_id || '').split('-').slice(-1)[0];
+  const score = (r.sentiment_score ?? 0);
+  const scoreDisplay = (score >= 0 ? '+' : '') + score.toFixed(2);
+
+  return `
+    <article class="voc-card" data-voc-id="${escapeHtml(r.voc_id)}"
+      data-sentiment="${r.sentiment}" data-severity="${r.severity}" data-category="${r.category_primary}">
+      <div class="voc-card-head">
+        <span class="voc-card-id mono">#${escapeHtml(shortId)}</span>
+        <span class="badge ${r.sentiment}">${SENTIMENT_LABELS[r.sentiment]?.ko || r.sentiment}</span>
+        <span class="badge category">${CATEGORY_LABELS[r.category_primary] || r.category_primary}</span>
+        ${r.severity && r.severity !== 'low' ? `<span class="badge ${r.severity}">${SEVERITY_LABELS[r.severity] || ''}</span>` : ''}
+        <span class="voc-expand-hint">⌵</span>
+      </div>
+      ${r.original_quote ? `
+        <div class="voc-quote">
+          <div class="voc-quote-inner">${escapeHtml(r.original_quote)}</div>
+        </div>
+      ` : ''}
+      <div class="voc-summary-line">
+        <strong>요약:</strong> ${escapeHtml(r.content_summary || '-')}
+      </div>
+      <div class="voc-meta-line">
+        <span>📍 ${escapeHtml(r.source_name || SOURCE_LABELS[r.source_type] || r.source_type)}</span>
+        ${r.original_date ? `<span>·</span><span>${escapeHtml(r.original_date)}</span>` : ''}
+        ${r.is_repeat_issue ? `<span>·</span><span class="repeat-flag">🔁 반복 이슈</span>` : ''}
+      </div>
+      <div class="voc-details">
+        <div class="voc-details-inner">
+          <div class="voc-insight-box">${escapeHtml(r.actionable_insight || '-')}</div>
+          ${r.utterance_evidence ? `<div class="voc-evidence-box">${escapeHtml(r.utterance_evidence)}</div>` : ''}
+          <div class="voc-detail-label">VOC ID</div>
+          <div class="voc-detail-value mono">${escapeHtml(r.voc_id)}</div>
+          <div class="voc-detail-label">감성 점수</div>
+          <div class="voc-detail-value mono">${scoreDisplay}</div>
+          <div class="voc-detail-label">세부 카테고리</div>
+          <div class="voc-detail-value">${escapeHtml(r.category_secondary || '-')}</div>
+          <div class="voc-detail-label">키워드</div>
+          <div class="voc-detail-value">${(r.keywords||[]).map(k => `<span style="display:inline-block; padding:1px 8px; background:var(--surface-alt); border-radius:4px; margin-right:4px; margin-bottom:3px; font-size:11.5px;">${escapeHtml(k)}</span>`).join('') || '-'}</div>
+          <div class="voc-detail-label">수집일</div>
+          <div class="voc-detail-value mono">${escapeHtml(r.collected_date || '-')}</div>
+          <div class="voc-detail-label">원문일</div>
+          <div class="voc-detail-value mono">${escapeHtml(r.original_date || '-')}</div>
+          <div class="voc-detail-label">원문 링크</div>
+          <div class="voc-detail-value">${r.source_url ? `<a href="${escapeHtml(r.source_url)}" target="_blank" rel="noopener" style="color:var(--maeil); word-break:break-all;">${escapeHtml(r.source_url)}</a>` : '<span class="muted">-</span>'}</div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function attachVocCardHandlers() {
+  $$('.voc-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('a')) return;
+      card.classList.toggle('expanded');
+    });
+  });
+}
+
+function applyFilter() {
+  $$('.voc-card').forEach(card => {
+    const sentiment = card.dataset.sentiment;
+    const severity = card.dataset.severity;
+    const category = card.dataset.category;
+    let show = true;
+    if (activeFilter === 'all') show = true;
+    else if (activeFilter.startsWith('sentiment:')) show = sentiment === activeFilter.split(':')[1];
+    else if (activeFilter.startsWith('severity:'))  show = severity === activeFilter.split(':')[1];
+    else if (activeFilter.startsWith('category:'))  show = category === activeFilter.split(':')[1];
+    card.style.display = show ? '' : 'none';
+  });
+}
+
+/* ----- Market Context ----- */
+function renderMarketContext(data) {
+  const mc = data.market_context || [];
+  const list = $('#marketList');
+
+  if (mc.length === 0) {
+    list.innerHTML = '<div class="market-empty">이번 조사에서 관련 시장 맥락 정보를 찾지 못했습니다.</div>';
+    return;
+  }
+
+  list.innerHTML = mc.map(m => `
+    <article class="market-card">
+      <div class="market-card-head">
+        <span class="market-type-badge">${escapeHtml((m.type || 'news').toUpperCase())}</span>
+        <span style="font-size:11.5px; color:var(--text-tertiary);">${escapeHtml(m.source_name || '-')}</span>
+        ${m.date ? `<span style="font-size:11.5px; color:var(--text-tertiary);">· ${escapeHtml(m.date)}</span>` : ''}
+      </div>
+      <div class="market-title">${escapeHtml(m.title || '-')}</div>
+      <div class="market-summary">${escapeHtml(m.summary || '-')}</div>
+      <div class="market-relevance">${escapeHtml(m.relevance_to_voc || '-')}</div>
+      <div class="market-meta-line">
+        ${m.source_url ? `<a href="${escapeHtml(m.source_url)}" target="_blank" rel="noopener">원문 링크 →</a>` : ''}
+      </div>
+    </article>
+  `).join('');
+}
+
+/* ==========================================================
+   Data Asset Viewer (UI 내 JSON/CSV/Schema)
+   ========================================================== */
+function renderDataAsset(data) {
+  renderJsonView(data);
+  renderCsvView(data);
+  renderSchemaView();
+
+  $$('.data-asset-tab').forEach(btn => {
+    btn.onclick = () => {
+      currentAssetView = btn.dataset.assetTab;
+      $$('.data-asset-tab').forEach(b => b.classList.toggle('active', b === btn));
+      $$('.data-asset-panel').forEach(p => p.classList.remove('active'));
+      $('#assetPanel' + currentAssetView.charAt(0).toUpperCase() + currentAssetView.slice(1)).classList.add('active');
+    };
+  });
+
+  $('#assetCopyBtn').onclick = async () => {
+    let text = '';
+    if (currentAssetView === 'json') text = JSON.stringify(currentData, null, 2);
+    else if (currentAssetView === 'csv') text = buildCsvText(currentData);
+    else if (currentAssetView === 'schema') text = SCHEMA_DOC;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('클립보드에 복사되었습니다');
+    } catch {
+      showToast('복사 실패 — 다운로드를 이용해주세요');
+    }
+  };
+
+  $('#assetDownloadBtn').onclick = () => {
+    if (currentAssetView === 'json') downloadJson();
+    else if (currentAssetView === 'csv') downloadCsv();
+    else if (currentAssetView === 'schema') {
+      const blob = new Blob([SCHEMA_DOC], { type: 'text/plain;charset=utf-8' });
+      downloadBlob(blob, 'VOC_schema_v4.txt');
+      showToast('스키마 파일을 다운로드했습니다');
+    }
+  };
+}
+
+function renderJsonView(data) {
+  const pre = $('#assetPanelJson').querySelector('pre');
+  pre.innerHTML = highlightJson(JSON.stringify(data, null, 2));
+}
+
+function highlightJson(jsonStr) {
+  const escaped = escapeHtml(jsonStr);
+  return escaped
+    .replace(/(&quot;[^&]*?&quot;)(\s*:)/g, '<span class="json-key">$1</span>$2')
+    .replace(/: (&quot;.*?&quot;)(,?)/g, ': <span class="json-string">$1</span>$2')
+    .replace(/: (-?\d+\.?\d*)(,?)/g, ': <span class="json-number">$1</span>$2')
+    .replace(/: (true|false)(,?)/g, ': <span class="json-boolean">$1</span>$2')
+    .replace(/: (null)(,?)/g, ': <span class="json-null">$1</span>$2');
+}
+
+function renderCsvView(data) {
+  const panel = $('#assetPanelCsv');
+  const recs = (data.voc_records || []);
+  if (recs.length === 0) {
+    panel.innerHTML = '<div style="padding:24px; color:var(--text-tertiary); font-size:13px;">수집된 VOC 없음</div>';
+    return;
+  }
+
+  let html = '<table class="csv-table"><thead><tr>';
+  CSV_HEADERS.forEach(h => { html += `<th>${h}</th>`; });
+  html += '</tr></thead><tbody>';
+  recs.forEach(r => {
+    html += '<tr>';
+    CSV_HEADERS.forEach((h, i) => {
+      let v = r[h];
+      if (Array.isArray(v)) v = v.join('|');
+      if (v === null || v === undefined) v = '';
+      const cls = i === 0 ? 'first-col' : '';
+      html += `<td class="${cls}" title="${escapeHtml(String(v))}">${escapeHtml(String(v))}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody></table>';
+  panel.innerHTML = html;
+}
+
+function renderSchemaView() {
+  const pre = $('#assetPanelSchema').querySelector('pre');
+  pre.innerHTML = highlightJson(SCHEMA_DOC);
+}
+
+/* ==========================================================
+   Export
+   ========================================================== */
+function renderExportBar(data) {
+  const m = data.metadata || {};
+  const total = m.total_voc_count || (data.voc_records?.length || 0);
+  $('#exportLabelName').textContent = m.product_name || '-';
+  $('#exportLabelCount').textContent = `${total}건 VOC + ${(data.market_context||[]).length}건 시장 맥락`;
+}
+
+function buildCsvText(d) {
+  const recs = (d.voc_records || []);
+  const rows = recs.map(r => CSV_HEADERS.map(h => {
+    let v = r[h];
+    if (Array.isArray(v)) v = v.join('|');
+    if (v == null) v = '';
+    v = String(v).replace(/"/g, '""');
+    return `"${v}"`;
+  }).join(','));
+  return '\uFEFF' + CSV_HEADERS.join(',') + '\n' + rows.join('\n');
+}
+
+function filenameBase() {
+  const m = currentData?.metadata || {};
+  const name = (m.product_name || 'product').replace(/[^\w가-힣]+/g, '_').slice(0, 40);
+  const id = m.collection_id || 'voc';
+  return `MaeilVOC_${name}_${id}`;
+}
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadJson() {
+  if (!currentData) return;
+  const blob = new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json' });
+  downloadBlob(blob, `${filenameBase()}.json`);
+  showToast('JSON 파일을 다운로드했습니다');
+}
+
+function downloadCsv() {
+  if (!currentData) return;
+  const csv = buildCsvText(currentData);
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  downloadBlob(blob, `${filenameBase()}.csv`);
+  showToast('CSV 파일을 다운로드했습니다');
+}
+
+$('#exportJson').addEventListener('click', downloadJson);
+$('#exportCsv').addEventListener('click', downloadCsv);
+
+$('#exportMd').addEventListener('click', async () => {
+  if (!currentData) return;
+  const md = buildMarkdown(currentData);
+  try {
+    await navigator.clipboard.writeText(md);
+    showToast('마크다운이 클립보드에 복사되었습니다');
+  } catch {
+    const blob = new Blob([md], { type: 'text/markdown' });
+    downloadBlob(blob, `${filenameBase()}.md`);
+    showToast('마크다운 파일을 다운로드했습니다');
+  }
+});
+
+function buildMarkdown(d) {
+  const m = d.metadata || {};
+  const s = d.aggregation?.sentiment_distribution || {};
+  const total = m.total_voc_count || 0;
+  const ins = d.insights || {};
+  const prov = d.data_provenance || {};
+
+  let md = `# VOC 분석 보고서: ${m.product_name || ''}\n\n`;
+  md += `- **수집 ID**: ${m.collection_id || ''}\n`;
+  md += `- **수집 일시**: ${m.collected_at || ''}\n`;
+  md += `- **브랜드**: ${m.brand || ''} · **카테고리**: ${m.product_category || ''}\n`;
+  md += `- **총 VOC**: ${total}건 · 긍정 ${percent(s.positive, total)}% / 중립 ${percent(s.neutral, total)}% / 부정 ${percent(s.negative, total)}%\n`;
+  md += `- **분석 버전**: ${m.analysis_version || 'v4.0'}\n\n`;
+
+  md += `## 📘 방법론 및 데이터 출처\n\n`;
+  md += `${prov.methodology_note || '-'}\n\n`;
+  md += `**수집 기간**: ${prov.coverage_period_estimate || '-'}\n\n`;
+  if ((prov.excluded_sources||[]).length) {
+    md += `**명시적 제외 소스**: ${prov.excluded_sources.join(', ')}\n\n`;
+  }
+  if ((prov.search_queries_executed||[]).length) {
+    md += `**실행된 검색 (${prov.search_queries_executed.length}회)**:\n`;
+    prov.search_queries_executed.forEach(q => {
+      md += `- [${PHASE_LABELS[q.phase] || q.phase}] \`${q.query}\` → ${q.yielded_vocs}건\n`;
+    });
+    md += `\n`;
+  }
+
+  md += `## 🔥 주요 불만 (Pain Points)\n\n`;
+  (ins.pain_points||[]).forEach((p,i) => {
+    md += `${i+1}. **${p.title}** — ${p.description}\n`;
+  });
+
+  md += `\n## 💚 주요 강점 (Strengths)\n\n`;
+  (ins.strengths||[]).forEach((p,i) => {
+    md += `${i+1}. **${p.title}** — ${p.description}\n`;
+  });
+
+  md += `\n## 💡 기회 요소 (Opportunities)\n\n`;
+  (ins.opportunities||[]).forEach((p,i) => {
+    md += `${i+1}. **${p.title}** — ${p.description}\n`;
+  });
+
+  md += `\n## 🚨 리스크 (Risks)\n\n`;
+  (ins.risks||[]).forEach((p,i) => {
+    md += `${i+1}. **${p.title}** — ${p.description}\n`;
+  });
+
+  md += `\n## 📋 VOC 레코드 (원문 인용)\n\n`;
+  (d.voc_records||[]).forEach(r => {
+    md += `### ${r.voc_id} · ${SENTIMENT_LABELS[r.sentiment]?.ko} · ${CATEGORY_LABELS[r.category_primary]}\n\n`;
+    md += `> "${r.original_quote || '-'}"\n\n`;
+    md += `- **요약**: ${r.content_summary || '-'}\n`;
+    md += `- **시사점**: ${r.actionable_insight || '-'}\n`;
+    md += `- **출처**: ${r.source_name || '-'} (${r.source_url || '-'})\n\n`;
+  });
+
+  if ((d.market_context||[]).length) {
+    md += `\n## 📰 시장 맥락 (Market Context)\n\n`;
+    d.market_context.forEach(x => {
+      md += `- **[${(x.type||'').toUpperCase()}] ${x.title}** (${x.source_name}, ${x.date})\n`;
+      md += `  - ${x.summary}\n`;
+      md += `  - 관련성: ${x.relevance_to_voc}\n`;
+    });
+  }
+
+  return md;
+}
+
+</script>
+</body>
+</html>

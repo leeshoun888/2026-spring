@@ -41,7 +41,7 @@ export async function collectYoutube(
     url.searchParams.set("part", "snippet");
     url.searchParams.set("type", "video");
     url.searchParams.set("q", keyword);
-    url.searchParams.set("maxResults", String(Math.min(Math.max(videosPerKeyword, 1), 25)));
+    url.searchParams.set("maxResults", String(Math.min(Math.max(videosPerKeyword, 1), 50)));
     url.searchParams.set("order", "date");
     url.searchParams.set("key", settings.youtubeApiKey);
 

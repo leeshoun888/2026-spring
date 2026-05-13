@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { AnalysisRun, DashboardData, Sentiment, Settings, SourceType, VocRecord } from "@/lib/types";
-import { generateSearchKeywords } from "@/lib/keywords";
 
 type SettingsResponse = Settings & {
   hasNaver?: boolean;
@@ -14,7 +13,8 @@ const SOURCE_LABELS: Record<SourceType, string> = {
   naver_blog: "네이버 블로그",
   naver_news: "네이버 뉴스",
   naver_cafe: "네이버 카페",
-  youtube: "YouTube"
+  youtube: "YouTube",
+  smartstore_review: "스마트스토어 리뷰"
 };
 
 const SENTIMENT_LABELS: Record<Sentiment, string> = {
@@ -29,25 +29,35 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("overview");
   const [sourceFilter, setSourceFilter] = useState<"all" | SourceType>("all");
   const [productName, setProductName] = useState("매일 바이오 그릭요거트");
-  const [keywords, setKeywords] = useState("");
   const [runs, setRuns] = useState<AnalysisRun[]>([]);
+  const [trashedRuns, setTrashedRuns] = useState<AnalysisRun[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string>("");
+  const [isNewProject, setIsNewProject] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
+  const [isUploadingReviews, setIsUploadingReviews] = useState(false);
+  const [isUploadDragActive, setIsUploadDragActive] = useState(false);
+  const reviewFileInputRef = useRef<HTMLInputElement | null>(null);
   const [status, setStatus] = useState("API 키를 입력하거나 환경변수를 설정한 뒤 초경량 분석을 실행하세요.");
 
   useEffect(() => {
     refreshAll();
   }, []);
 
-  async function refreshAll(runId = selectedRunId) {
+  async function refreshAll(runId = selectedRunId, options: { keepNewProject?: boolean } = {}) {
     const dataUrl = runId ? `/api/data?runId=${encodeURIComponent(runId)}` : "/api/data";
     const [settingsRes, dataRes, runsRes] = await Promise.all([fetch("/api/settings"), fetch(dataUrl), fetch("/api/runs")]);
     const nextData = await dataRes.json();
-    const nextRuns = ((await runsRes.json()).runs || []) as AnalysisRun[];
+    const runsPayload = await runsRes.json();
+    const nextRuns = (runsPayload.runs || []) as AnalysisRun[];
+    const nextTrashedRuns = (runsPayload.trashedRuns || []) as AnalysisRun[];
     setSettings(await settingsRes.json());
     setData(nextData);
     setRuns(nextRuns);
-    if (!runId && nextData.metadata?.selectedRunId) setSelectedRunId(nextData.metadata.selectedRunId);
+    setTrashedRuns(nextTrashedRuns);
+    if (!runId && nextData.metadata?.selectedRunId && !isNewProject && !options.keepNewProject) {
+      setSelectedRunId(nextData.metadata.selectedRunId);
+    }
   }
 
   async function saveSettings(formData: FormData) {
@@ -74,26 +84,26 @@ export default function Home() {
 
   async function runAnalysis() {
     setIsRunning(true);
-    setStatus("초경량 모드로 공개 데이터 최대 10,000건을 수집하고 로컬 분류 엔진으로 분석하고 있습니다.");
+    setStatus("초경량 모드로 공개 데이터를 넓게 수집하고 유효 VOC 1,000건을 목표로 필터링하고 있습니다.");
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         body: JSON.stringify({
           productName,
-          keywords: keywords.split("\n").map((keyword) => keyword.trim()).filter(Boolean),
           analysisMode: "ultra",
           naverPerKeyword: 1000,
-          youtubeVideosPerKeyword: 25,
-          youtubeCommentsPerVideo: 80,
+          youtubeVideosPerKeyword: 50,
+          youtubeCommentsPerVideo: 100,
           maxRawItems: 10000,
-          targetVocCount: 10000
+          targetVocCount: 1000
         })
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.error || "분석 실행에 실패했습니다.");
+      setIsNewProject(false);
       setSelectedRunId(result.run.id);
       await refreshAll(result.run.id);
-      setStatus(`분석 완료: 공개 데이터 ${result.run.rawCount.toLocaleString()}건 수집, ${result.run.vocCount.toLocaleString()}건 전체 조사 완료`);
+      setStatus(`분석 완료: 공개 데이터 ${result.run.rawCount.toLocaleString()}건 수집, 유효 VOC ${result.run.vocCount.toLocaleString()}건 필터링 완료`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "분석 실행에 실패했습니다.");
     } finally {
@@ -101,23 +111,77 @@ export default function Home() {
     }
   }
 
-  function fillRecommendedKeywords() {
-    setKeywords(generateSearchKeywords(productName).join("\n"));
-    setStatus("확장 검색용 추천 키워드를 생성했습니다. 초경량 기본 실행은 비워두고 제품명 단일 검색을 권장합니다.");
+  async function uploadReviewFile(file?: File | null) {
+    if (!file) return;
+    setIsUploadingReviews(true);
+    setStatus("스마트스토어 리뷰 엑셀을 읽고 구매 리뷰 VOC로 변환하고 있습니다.");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("productName", productName);
+      const res = await fetch("/api/import/reviews", { method: "POST", body: formData });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "리뷰 엑셀 업로드에 실패했습니다.");
+      setIsNewProject(false);
+      setSelectedRunId(result.run.id);
+      setSourceFilter("all");
+      setActiveTab("voc");
+      await refreshAll(result.run.id);
+      setStatus(`업로드 완료: 리뷰 ${result.run.rawCount.toLocaleString()}건 중 유효 VOC ${result.run.vocCount.toLocaleString()}건을 반영했습니다.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "리뷰 엑셀 업로드에 실패했습니다.");
+    } finally {
+      setIsUploadingReviews(false);
+      setIsUploadDragActive(false);
+      if (reviewFileInputRef.current) reviewFileInputRef.current.value = "";
+    }
   }
 
-  const records = useMemo(() => {
-    const all = data?.vocRecords || [];
-    return sourceFilter === "all" ? all : all.filter((record) => record.source === sourceFilter);
-  }, [data, sourceFilter]);
+  function startNewProject() {
+    setIsNewProject(true);
+    setSelectedRunId("");
+    setSourceFilter("all");
+    setActiveTab("overview");
+    setStatus("새 프로젝트입니다. 분석 제품명을 입력한 뒤 실제 데이터 분석을 실행하세요.");
+  }
 
-  const total = data?.metadata.totalVocCount || 0;
-  const sentiment = data?.aggregation.sentiment || { positive: 0, neutral: 0, negative: 0 };
-  const pct = data?.aggregation.sentimentPct || { positive: 0, neutral: 0, negative: 0 };
-  const quality = data?.aggregation.quality || { firstPersonReviewCount: 0, productRelevantCount: 0, highRiskCount: 0, averageRelevanceScore: 0 };
-  const sources = data?.metadata.sourceBreakdown || { naver_blog: 0, naver_news: 0, naver_cafe: 0, youtube: 0 };
-  const rawSources = data?.metadata.rawSourceBreakdown || { naver_blog: 0, naver_news: 0, naver_cafe: 0, youtube: 0 };
-  const selectedRun = runs.find((run) => run.id === selectedRunId) || data?.metadata.latestRun;
+  async function moveProjectToTrash(run: AnalysisRun) {
+    if (!window.confirm(`'${run.productName}' 프로젝트를 휴지통으로 이동할까요? 90일 후 영구 삭제됩니다.`)) return;
+    await fetch("/api/runs", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "trash", runId: run.id })
+    });
+    const isSelectedRun = selectedRunId === run.id;
+    if (isSelectedRun) startNewProject();
+    await refreshAll(isSelectedRun ? "" : selectedRunId, { keepNewProject: isSelectedRun });
+    setStatus("프로젝트가 휴지통으로 이동되었습니다. 90일 이내에 복구할 수 있습니다.");
+  }
+
+  async function restoreProject(run: AnalysisRun) {
+    await fetch("/api/runs", {
+      method: "PATCH",
+      body: JSON.stringify({ action: "restore", runId: run.id })
+    });
+    setIsNewProject(false);
+    setSelectedRunId(run.id);
+    await refreshAll(run.id);
+    setStatus("휴지통에서 프로젝트를 복구했습니다.");
+  }
+
+  const dashboardData = isNewProject ? createEmptyDashboard(productName, runs, trashedRuns) : data;
+
+  const records = useMemo(() => {
+    const all = dashboardData?.vocRecords || [];
+    return sourceFilter === "all" ? all : all.filter((record) => record.source === sourceFilter);
+  }, [dashboardData, sourceFilter]);
+
+  const total = dashboardData?.metadata.totalVocCount || 0;
+  const sentiment = dashboardData?.aggregation.sentiment || { positive: 0, neutral: 0, negative: 0 };
+  const pct = dashboardData?.aggregation.sentimentPct || { positive: 0, neutral: 0, negative: 0 };
+  const quality = dashboardData?.aggregation.quality || { firstPersonReviewCount: 0, productRelevantCount: 0, highRiskCount: 0, averageRelevanceScore: 0 };
+  const sources = dashboardData?.metadata.sourceBreakdown || { naver_blog: 0, naver_news: 0, naver_cafe: 0, youtube: 0, smartstore_review: 0 };
+  const rawSources = dashboardData?.metadata.rawSourceBreakdown || { naver_blog: 0, naver_news: 0, naver_cafe: 0, youtube: 0, smartstore_review: 0 };
+  const selectedRun = isNewProject ? undefined : runs.find((run) => run.id === selectedRunId) || dashboardData?.metadata.latestRun;
 
   return (
     <>
@@ -153,26 +217,44 @@ export default function Home() {
               <span>분석 프로젝트</span>
               <strong>{runs.length}</strong>
             </div>
+            <button className={`new-project-button ${isNewProject ? "active" : ""}`} onClick={startNewProject}>
+              <span>새 프로젝트</span>
+              <em>빈 대시보드에서 시작</em>
+            </button>
             <div className="project-list">
               {runs.length ? (
                 runs.map((run) => (
-                  <button
+                  <ProjectButton
                     key={run.id}
-                    className={run.id === selectedRunId ? "active" : ""}
-                    onClick={() => {
+                    run={run}
+                    active={run.id === selectedRunId}
+                    onOpen={() => {
+                      setIsNewProject(false);
                       setSelectedRunId(run.id);
                       refreshAll(run.id);
                       setSourceFilter("all");
                     }}
-                  >
-                    <span>{run.productName}</span>
-                    <small>{formatRunDate(run.startedAt)}</small>
-                    <em>{run.status === "completed" ? `${run.vocCount.toLocaleString()}건 조사` : run.status}</em>
-                  </button>
+                    onTrash={() => moveProjectToTrash(run)}
+                  />
                 ))
               ) : (
                 <div className="empty-projects">아직 저장된 분석 프로젝트가 없습니다.</div>
               )}
+            </div>
+            <div className="trash-section">
+              <div className="project-sidebar-head">
+                <span>휴지통</span>
+                <strong>{trashedRuns.length}</strong>
+              </div>
+              <div className="project-list">
+                {trashedRuns.length ? (
+                  trashedRuns.map((run) => (
+                    <TrashProjectButton key={run.id} run={run} onRestore={() => restoreProject(run)} />
+                  ))
+                ) : (
+                  <div className="empty-projects">휴지통이 비어 있습니다.</div>
+                )}
+              </div>
             </div>
           </aside>
 
@@ -183,26 +265,35 @@ export default function Home() {
               분석 제품
             </label>
             <input id="productName" className="text-input" value={productName} onChange={(e) => setProductName(e.target.value)} />
-            <label className="field-label" htmlFor="keywords">
-              검색 키워드 <span className="optional-label">선택</span>
-            </label>
-            <textarea
-              id="keywords"
-              className="text-area"
-              rows={5}
-              value={keywords}
-              onChange={(e) => setKeywords(e.target.value)}
-              placeholder={generateSearchKeywords(productName).slice(0, 5).join("\n")}
-            />
-            <div className="keyword-tools">
-              <button type="button" className="btn-secondary" onClick={fillRecommendedKeywords}>
-                확장 키워드 채우기
-              </button>
-              <span>초경량 기본값은 비워두면 제품명 기반 확장 검색으로 공개 데이터 최대 10,000건을 조사합니다.</span>
-            </div>
+            <p className="product-note">입력한 제품명 하나로 네이버와 유튜브 공개 데이터를 최대 10,000건 조사합니다.</p>
             <button className="btn-primary" onClick={runAnalysis} disabled={isRunning}>
               {isRunning ? "수집·분석 중..." : "실제 데이터 분석 실행"}
             </button>
+            <div
+              className={`review-dropzone ${isUploadDragActive ? "active" : ""}`}
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsUploadDragActive(true);
+              }}
+              onDragLeave={() => setIsUploadDragActive(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                uploadReviewFile(event.dataTransfer.files?.[0]);
+              }}
+            >
+              <input
+                ref={reviewFileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={(event) => uploadReviewFile(event.target.files?.[0])}
+              />
+              <span>스마트스토어 리뷰 엑셀 업로드</span>
+              <strong>{isUploadingReviews ? "업로드·분석 중..." : "파일을 끌어오거나 클릭해서 선택"}</strong>
+              <em>판매자센터에서 내려받은 구매 리뷰 파일을 새 프로젝트로 분석합니다.</em>
+              <button type="button" className="btn-secondary" onClick={() => reviewFileInputRef.current?.click()} disabled={isUploadingReviews}>
+                파일 선택
+              </button>
+            </div>
             <p className="status-line">{status}</p>
           </div>
 
@@ -210,26 +301,37 @@ export default function Home() {
             <div className="settings-head">
               <div>
                 <h2>API 설정</h2>
-                <p>환경변수 또는 이 화면에 입력한 키를 사용합니다.</p>
+                <p>{isSettingsOpen ? "환경변수 또는 이 화면에 입력한 키를 사용합니다." : "필요할 때만 열어서 키를 관리합니다."}</p>
               </div>
-              <button type="button" className="btn-secondary" onClick={testConnections}>
-                연결 테스트
-              </button>
+              <div className="settings-actions">
+                {isSettingsOpen && (
+                  <button type="button" className="btn-secondary" onClick={testConnections}>
+                    연결 테스트
+                  </button>
+                )}
+                <button type="button" className="btn-secondary" onClick={() => setIsSettingsOpen((open) => !open)}>
+                  {isSettingsOpen ? "API 설정 닫기" : "API 설정 열기"}
+                </button>
+              </div>
             </div>
-            <div className="settings-grid">
-              <CredentialField name="naverClientId" label="Naver Client ID" placeholder={settings.naverClientId || ""} />
-              <CredentialField name="naverClientSecret" label="Naver Client Secret" placeholder={settings.naverClientSecret || ""} />
-              <CredentialField name="youtubeApiKey" label="YouTube API Key" placeholder={settings.youtubeApiKey || ""} />
-              <CredentialField name="openaiApiKey" label="OpenAI API Key" placeholder={settings.openaiApiKey || ""} />
-              <CredentialField name="openaiModel" label="OpenAI Model" placeholder={settings.openaiModel || "gpt-4o-mini"} defaultValue={settings.openaiModel || "gpt-4o-mini"} />
-              <CredentialField name="cronSecret" label="Cron Secret" placeholder={settings.cronSecret || ""} />
-            </div>
-            <div className="settings-state">
-              <ConnectionPill active={settings.hasNaver} label="Naver" />
-              <ConnectionPill active={settings.hasYoutube} label="YouTube" />
-              <ConnectionPill active={settings.hasOpenAI} label="OpenAI" />
-              <button className="btn-save">저장</button>
-            </div>
+            {isSettingsOpen && (
+              <>
+                <div className="settings-grid">
+                  <CredentialField name="naverClientId" label="Naver Client ID" placeholder={settings.naverClientId || ""} />
+                  <CredentialField name="naverClientSecret" label="Naver Client Secret" placeholder={settings.naverClientSecret || ""} />
+                  <CredentialField name="youtubeApiKey" label="YouTube API Key" placeholder={settings.youtubeApiKey || ""} />
+                  <CredentialField name="openaiApiKey" label="OpenAI API Key" placeholder={settings.openaiApiKey || ""} />
+                  <CredentialField name="openaiModel" label="OpenAI Model" placeholder={settings.openaiModel || "gpt-4o-mini"} defaultValue={settings.openaiModel || "gpt-4o-mini"} />
+                  <CredentialField name="cronSecret" label="Cron Secret" placeholder={settings.cronSecret || ""} />
+                </div>
+                <div className="settings-state">
+                  <ConnectionPill active={settings.hasNaver} label="Naver" />
+                  <ConnectionPill active={settings.hasYoutube} label="YouTube" />
+                  <ConnectionPill active={settings.hasOpenAI} label="OpenAI" />
+                  <button className="btn-save">저장</button>
+                </div>
+              </>
+            )}
           </form>
         </section>
 
@@ -266,14 +368,14 @@ export default function Home() {
                 <div className="anomaly-pulse" />
                 <div>
                   <span className="anomaly-tag">이상 감지 후보</span>
-                  <h2>{topNegativeKeyword(data) || "분석 데이터가 쌓이면 급증 이슈를 감지합니다."}</h2>
+                  <h2>{topNegativeKeyword(dashboardData) || "분석 데이터가 쌓이면 급증 이슈를 감지합니다."}</h2>
                   <p>부정 VOC와 고위험 키워드를 기준으로 품질·가격·유통 리스크를 매일 추적합니다.</p>
                 </div>
               </div>
 
               <div className="two-col">
                 <Section title="14일 감정 추이" number="01">
-                  <TrendChart data={data?.aggregation.trend || []} />
+                  <TrendChart data={dashboardData?.aggregation.trend || []} />
                 </Section>
                 <Section title="채널 분포" number="02">
                   <SourceBars sources={rawSources} />
@@ -281,8 +383,8 @@ export default function Home() {
               </div>
 
               <div className="two-col">
-                <InsightList title="주요 불만" number="03" items={data?.insights.pain || []} />
-                <InsightList title="주요 강점" number="04" items={data?.insights.strength || []} />
+                <InsightList title="주요 불만" number="03" items={dashboardData?.insights.pain || []} />
+                <InsightList title="주요 강점" number="04" items={dashboardData?.insights.strength || []} />
               </div>
             </div>
           )}
@@ -293,15 +395,15 @@ export default function Home() {
                 <SentimentBar sentiment={sentiment} pct={pct} />
               </Section>
               <Section title="검증 품질" number="02">
-                <QualityGrid quality={quality} latestStatus={data?.metadata.latestRun?.status === "completed" ? "완료" : data?.metadata.latestRun?.status || "대기"} />
+                <QualityGrid quality={quality} latestStatus={dashboardData?.metadata.latestRun?.status === "completed" ? "완료" : dashboardData?.metadata.latestRun?.status || "대기"} />
               </Section>
               <div className="two-col">
-                <InsightList title="기회 요소" number="03" items={data?.insights.opportunity || []} />
-                <InsightList title="리스크" number="04" items={data?.insights.risk || []} />
+                <InsightList title="기회 요소" number="03" items={dashboardData?.insights.opportunity || []} />
+                <InsightList title="리스크" number="04" items={dashboardData?.insights.risk || []} />
               </div>
               <Section title="핵심 키워드" number="05">
                 <div className="keyword-cloud">
-                  {(data?.aggregation.keywords || []).map((item) => (
+                  {(dashboardData?.aggregation.keywords || []).map((item) => (
                     <span key={item.kw} className={`keyword ${item.sent}`}>
                       {item.kw} <b>{item.count}</b>
                     </span>
@@ -310,7 +412,7 @@ export default function Home() {
               </Section>
               <Section title="VOC 발화" number="06">
                 <div className="filters">
-                  <FilterButton label="전체" active={sourceFilter === "all"} onClick={() => setSourceFilter("all")} count={data?.vocRecords.length || 0} />
+                  <FilterButton label="전체" active={sourceFilter === "all"} onClick={() => setSourceFilter("all")} count={dashboardData?.vocRecords.length || 0} />
                   {(Object.keys(SOURCE_LABELS) as SourceType[]).map((source) => (
                     <FilterButton
                       key={source}
@@ -323,7 +425,7 @@ export default function Home() {
                 </div>
                 <div className="voc-list">
                   {records.length ? (
-                    records.slice(0, 60).map((record) => (
+                    records.map((record) => (
                       <VocCard key={record.id} record={record} />
                     ))
                   ) : (
@@ -344,11 +446,17 @@ export default function Home() {
                 <div className="channel-grid">
                   {(Object.keys(SOURCE_LABELS) as SourceType[]).map((source) => (
                     <div className="channel-card" key={source}>
-                      <div className="channel-symbol">{source === "youtube" ? "▶" : "N"}</div>
+                      <div className="channel-symbol">{source === "youtube" ? "▶" : source === "smartstore_review" ? "XLS" : "N"}</div>
                       <h3>{SOURCE_LABELS[source]}</h3>
                       <strong>{(rawSources[source] || 0).toLocaleString()}건 수집</strong>
                       <span>{(sources[source] || 0).toLocaleString()}건 분석 반영</span>
-                      <p>{source === "youtube" ? "YouTube Data API v3 댓글 수집" : "Naver Developers Search API 기반 수집"}</p>
+                      <p>
+                        {source === "youtube"
+                          ? "YouTube Data API v3 댓글 수집"
+                          : source === "smartstore_review"
+                            ? "판매자센터 엑셀 업로드 기반 구매 리뷰"
+                            : "Naver Developers Search API 기반 수집"}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -360,13 +468,13 @@ export default function Home() {
             <div className="panel">
               <div className="report-card">
                 <div className="report-eyebrow">Executive Weekly</div>
-                <h2>{data?.metadata.productName || productName}.<br />VOC 자동 분석 보고.</h2>
+                <h2>{dashboardData?.metadata.productName || productName}.<br />VOC 자동 분석 보고.</h2>
                 <p>
                   총 <strong>{total.toLocaleString()}건</strong>의 VOC가 수집·분석되었습니다. 긍정 {pct.positive}%,
                   중립 {pct.neutral}%, 부정 {pct.negative}%이며, 주요 리스크는 부정 발화와 고위험 키워드를 기준으로 산출했습니다.
                 </p>
                 <div className="recommendations">
-                  {(data?.insights.risk || []).slice(0, 4).map((item, index) => (
+                  {(dashboardData?.insights.risk || []).slice(0, 4).map((item, index) => (
                     <div className="rec" key={`${item.title}-${index}`}>
                       <span>{index + 1}</span>
                       <div>
@@ -402,14 +510,14 @@ export default function Home() {
                   <a className="btn-secondary link-button" href="/api/export/json">
                     JSON
                   </a>
-                  <button className="btn-secondary" onClick={() => download("json", data)}>
+                  <button className="btn-secondary" onClick={() => download("json", dashboardData)}>
                     화면 JSON
                   </button>
-                  <button className="btn-secondary" onClick={() => download("csv", recordsToCsv(data?.vocRecords || []))}>
+                  <button className="btn-secondary" onClick={() => download("csv", recordsToCsv(dashboardData?.vocRecords || []))}>
                     CSV 다운로드
                   </button>
                 </div>
-                <pre className="asset-pre">{JSON.stringify({ metadata: data?.metadata, aggregation: data?.aggregation }, null, 2)}</pre>
+                <pre className="asset-pre">{JSON.stringify({ metadata: dashboardData?.metadata, aggregation: dashboardData?.aggregation }, null, 2)}</pre>
               </Section>
             </div>
           )}
@@ -419,6 +527,92 @@ export default function Home() {
       </main>
     </>
   );
+}
+
+function ProjectButton({
+  run,
+  active,
+  onOpen,
+  onTrash
+}: {
+  run: AnalysisRun;
+  active: boolean;
+  onOpen: () => void;
+  onTrash: () => void;
+}) {
+  return (
+    <button className={active ? "active" : ""} onClick={onOpen}>
+      <span>{run.productName}</span>
+      <small>{formatRunDate(run.startedAt)}</small>
+      <em>{run.status === "completed" ? `${run.vocCount.toLocaleString()}건 조사` : run.status}</em>
+      <i
+        role="button"
+        tabIndex={0}
+        className="project-action danger"
+        onClick={(event) => {
+          event.stopPropagation();
+          onTrash();
+        }}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            event.stopPropagation();
+            onTrash();
+          }
+        }}
+      >
+        삭제
+      </i>
+    </button>
+  );
+}
+
+function TrashProjectButton({ run, onRestore }: { run: AnalysisRun; onRestore: () => void }) {
+  return (
+    <button className="trashed-project" onClick={onRestore}>
+      <span>{run.productName}</span>
+      <small>삭제 {formatRunDate(run.deletedAt)} · 영구삭제 {formatRunDate(run.purgeAt)}</small>
+      <em>{run.vocCount.toLocaleString()}건 조사</em>
+      <i className="project-action restore">복구</i>
+    </button>
+  );
+}
+
+function createEmptyDashboard(productName: string, runs: AnalysisRun[], trashedRuns: AnalysisRun[]): DashboardData {
+  const emptySources = { naver_blog: 0, naver_news: 0, naver_cafe: 0, youtube: 0, smartstore_review: 0 };
+  const emptySentiment = { positive: 0, neutral: 0, negative: 0 };
+  return {
+    metadata: {
+      productName,
+      totalVocCount: 0,
+      sourceBreakdown: emptySources,
+      rawSourceBreakdown: emptySources,
+      runs,
+      trashedRuns
+    },
+    aggregation: {
+      sentiment: emptySentiment,
+      sentimentPct: emptySentiment,
+      quality: {
+        firstPersonReviewCount: 0,
+        productRelevantCount: 0,
+        highRiskCount: 0,
+        averageRelevanceScore: 0
+      },
+      category: {},
+      negativeReasons: {},
+      keywords: [],
+      trend: []
+    },
+    insights: {
+      pain: [],
+      strength: [],
+      opportunity: [],
+      risk: []
+    },
+    vocRecords: [],
+    rawItems: []
+  };
 }
 
 function CredentialField({ name, label, placeholder, defaultValue }: { name: string; label: string; placeholder?: string; defaultValue?: string }) {

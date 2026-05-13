@@ -1,5 +1,5 @@
 import type { BusinessImpact, RawItem, Settings, Severity, Sentiment, VocRecord } from "./types";
-import { productTokens } from "./gates";
+import { productRelevanceScore } from "./gates";
 import { stableId } from "./utils";
 
 const ANALYSIS_BATCH_SIZE = 10;
@@ -217,13 +217,14 @@ function heuristicAnalyze(productName: string, rawItems: RawItem[]): LlmRecord[]
     const category = pickCategory(text);
     const keywords = extractKeywords(text, productName);
     const severity: Severity = sentiment === "negative" && neg >= 2 ? "high" : sentiment === "negative" ? "medium" : "low";
-    const isProductRelevant = isLikelyProductRelevant(text, productName);
+    const relevanceScore = productRelevanceScore(text, productName);
+    const isProductRelevant = relevanceScore >= 0.72;
     const isFirstPersonReview = isLikelyFirstPersonReview(text);
-    const isVoc = isProductRelevant && (isFirstPersonReview || /후기|리뷰|추천|불만|재구매|먹어|마셔|샀/.test(text));
+    const isVoc = isProductRelevant && (isFirstPersonReview || /후기|리뷰|추천|불만|재구매|먹어|마셔|샀|맛있|만족|별로|비싸/.test(text));
     return {
       rawItemId: item.id,
       isVoc,
-      relevanceScore: isProductRelevant ? 0.86 : 0.42,
+      relevanceScore,
       sentiment,
       category,
       categorySecondary: keywords[0] || category,
@@ -314,18 +315,8 @@ function extractKeywords(text: string, productName: string) {
   return found.length ? found : [pickCategory(text)];
 }
 
-function isLikelyProductRelevant(text: string, productName: string) {
-  if (/보도자료|출시했다|밝혔다|기사|뉴스/.test(text) && !/후기|댓글|먹어|샀|추천|불편|좋|비싸/.test(text)) return false;
-  const compactText = text.replace(/\s+/g, "");
-  const compactProduct = productName.replace(/\s+/g, "");
-  if (text.includes(productName) || compactText.includes(compactProduct)) return true;
-  const tokens = productTokens(productName);
-  const matched = tokens.filter((token) => compactText.includes(token.replace(/\s+/g, "")));
-  return matched.length >= Math.min(2, tokens.length || 2);
-}
-
 function isLikelyFirstPersonReview(text: string) {
-  return /제가|나는|전 |저는|우리|아이|남편|아내|엄마|아빠|먹어|마셔|샀|구매|재구매|먹였|먹어봤|마셔봤|좋았|별로|불편|추천/.test(text);
+  return /제가|나는|전 |저는|우리|아이|남편|아내|엄마|아빠|먹어|마셔|샀|구매|재구매|먹였|먹어봤|마셔봤|좋았|좋아요|맛있|만족|별로|불편|추천/.test(text);
 }
 
 function sentimentLabel(sentiment: Sentiment) {

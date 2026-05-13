@@ -1,4 +1,4 @@
-export type SourceType = "naver_blog" | "naver_news" | "naver_cafe" | "youtube";
+export type SourceType = "naver_blog" | "naver_news" | "naver_cafe" | "youtube" | "smartstore_review";
 export type Sentiment = "positive" | "neutral" | "negative";
 export type Severity = "low" | "medium" | "high";
 export type BusinessImpact = "low" | "medium" | "high";
@@ -14,7 +14,6 @@ export type Settings = {
 
 export type QueryConfig = {
   productName: string;
-  keywords: string[];
   competitorKeywords: string[];
   analysisMode?: "ultra" | "llm";
   naverPerKeyword: number;
@@ -83,6 +82,8 @@ export type AnalysisRun = {
   rawCount: number;
   vocCount: number;
   error?: string;
+  deletedAt?: string;
+  purgeAt?: string;
 };
 
 export type DashboardData = {
@@ -95,6 +96,7 @@ export type DashboardData = {
     latestRun?: AnalysisRun;
     selectedRunId?: string;
     runs: AnalysisRun[];
+    trashedRuns: AnalysisRun[];
   };
   aggregation: {
     sentiment: Record<Sentiment, number>;

@@ -18,6 +18,7 @@ const PRIVATE_SETTINGS_FILE = path.join(PRIVATE_DATA_DIR, "settings.json");
 const LEGACY_STORE_FILE = path.join(PRIVATE_DATA_DIR, "voc-state.json");
 const MAX_STORED_ITEMS = 100000;
 const MAX_RESPONSE_ITEMS = 10000;
+const TRASH_RETENTION_DAYS = 90;
 
 const EMPTY_STORE: StoreShape = {
   settings: {},
@@ -75,13 +76,31 @@ export async function saveSettings(settings: Settings) {
 
 export async function addRun(run: AnalysisRun) {
   const store = await readStore();
-  store.runs = [run, ...store.runs].slice(0, 50);
+  store.runs = [run, ...store.runs];
   await writeStore(store);
 }
 
 export async function updateRun(id: string, patch: Partial<AnalysisRun>) {
   const store = await readStore();
   store.runs = store.runs.map((run) => (run.id === id ? { ...run, ...patch } : run));
+  await writeStore(store);
+}
+
+export async function moveRunToTrash(id: string) {
+  const store = await readStore();
+  const deletedAt = new Date().toISOString();
+  const purgeAt = addDays(deletedAt, TRASH_RETENTION_DAYS);
+  store.runs = store.runs.map((run) => (run.id === id ? { ...run, deletedAt, purgeAt } : run));
+  await writeStore(store);
+}
+
+export async function restoreRun(id: string) {
+  const store = await readStore();
+  store.runs = store.runs.map((run) => {
+    if (run.id !== id) return run;
+    const { deletedAt, purgeAt, ...restoredRun } = run;
+    return restoredRun;
+  });
   await writeStore(store);
 }
 
@@ -98,8 +117,10 @@ export async function appendData(runId: string, rawItems: RawItem[], vocRecords:
 
 export async function buildDashboardData(runId?: string): Promise<DashboardData> {
   const store = await readStore();
-  const latestRun = store.runs[0];
-  const selectedRun = store.runs.find((run) => run.id === runId) || latestRun;
+  const activeRuns = store.runs.filter((run) => !run.deletedAt);
+  const trashedRuns = store.runs.filter((run) => run.deletedAt);
+  const latestRun = activeRuns[0];
+  const selectedRun = activeRuns.find((run) => run.id === runId) || latestRun;
   const selectedRunId = selectedRun?.id;
   const records = store.vocRecords.filter((record) => !selectedRunId || record.runId === selectedRunId);
   const rawItems = store.rawItems.filter((item) => !selectedRunId || item.runId === selectedRunId);
@@ -157,17 +178,20 @@ export async function buildDashboardData(runId?: string): Promise<DashboardData>
         naver_blog: sourceBreakdown.naver_blog || 0,
         naver_news: sourceBreakdown.naver_news || 0,
         naver_cafe: sourceBreakdown.naver_cafe || 0,
-        youtube: sourceBreakdown.youtube || 0
+        youtube: sourceBreakdown.youtube || 0,
+        smartstore_review: sourceBreakdown.smartstore_review || 0
       },
       rawSourceBreakdown: {
         naver_blog: rawSourceBreakdown.naver_blog || 0,
         naver_news: rawSourceBreakdown.naver_news || 0,
         naver_cafe: rawSourceBreakdown.naver_cafe || 0,
-        youtube: rawSourceBreakdown.youtube || 0
+        youtube: rawSourceBreakdown.youtube || 0,
+        smartstore_review: rawSourceBreakdown.smartstore_review || 0
       },
       latestRun: selectedRun,
       selectedRunId,
-      runs: store.runs
+      runs: activeRuns,
+      trashedRuns
     },
     aggregation: {
       sentiment,
@@ -293,15 +317,15 @@ function removeEmptySecrets(settings: Settings) {
 async function readAnalysisStore(): Promise<AnalysisStoreShape> {
   const analysis = await readJson<Partial<AnalysisStoreShape>>(ANALYSIS_STORE_FILE);
   if (analysis) {
-    const normalized = normalizeAnalysisStore(analysis);
+    const normalized = purgeExpiredRuns(normalizeAnalysisStore(analysis));
     if (hasAnalysisData(normalized)) {
-      if (hasOrphanAnalysisData(analysis)) await writeAnalysisStore(normalized);
+      if (hasOrphanAnalysisData(analysis) || hasExpiredTrashedRuns(analysis)) await writeAnalysisStore(normalized);
       return normalized;
     }
   }
 
   const legacy = await readJson<Partial<StoreShape>>(LEGACY_STORE_FILE);
-  const migrated = normalizeAnalysisStore(legacy || EMPTY_ANALYSIS_STORE);
+  const migrated = purgeExpiredRuns(normalizeAnalysisStore(legacy || EMPTY_ANALYSIS_STORE));
   if (hasAnalysisData(migrated)) {
     await writeAnalysisStore(migrated);
     return migrated;
@@ -329,7 +353,7 @@ async function readSettingsStore(): Promise<Settings> {
 
 async function writeAnalysisStore(store: Partial<AnalysisStoreShape>) {
   await mkdir(REPO_DATA_DIR, { recursive: true });
-  const analysis: AnalysisStoreShape = normalizeAnalysisStore(store);
+  const analysis: AnalysisStoreShape = purgeExpiredRuns(normalizeAnalysisStore(store));
   await writeFile(ANALYSIS_STORE_FILE, JSON.stringify(analysis, null, 2));
 }
 
@@ -386,6 +410,32 @@ function hasOrphanAnalysisData(store: Partial<AnalysisStoreShape>) {
     store.rawItems?.some((item) => !item.runId) ||
       store.vocRecords?.some((record) => !record.runId)
   );
+}
+
+function purgeExpiredRuns(store: AnalysisStoreShape): AnalysisStoreShape {
+  const now = Date.now();
+  const expiredIds = new Set(
+    store.runs
+      .filter((run) => run.deletedAt && run.purgeAt && new Date(run.purgeAt).getTime() <= now)
+      .map((run) => run.id)
+  );
+  if (!expiredIds.size) return store;
+  return {
+    runs: store.runs.filter((run) => !expiredIds.has(run.id)),
+    rawItems: store.rawItems.filter((item) => !expiredIds.has(item.runId || "")),
+    vocRecords: store.vocRecords.filter((record) => !expiredIds.has(record.runId))
+  };
+}
+
+function hasExpiredTrashedRuns(store: Partial<AnalysisStoreShape>) {
+  const now = Date.now();
+  return Boolean(store.runs?.some((run) => run.deletedAt && run.purgeAt && new Date(run.purgeAt).getTime() <= now));
+}
+
+function addDays(value: string, days: number) {
+  const date = new Date(value);
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
 }
 
 function hasAnySecret(settings: Settings) {

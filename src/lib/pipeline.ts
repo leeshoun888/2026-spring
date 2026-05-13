@@ -1,21 +1,22 @@
 import { analyzeRawItemsLocally, analyzeRawItemsToTarget } from "./analyzer";
 import { isLikelyRelevantCandidate, isStrictValidVoc } from "./gates";
-import { generateSearchKeywords } from "./keywords";
 import { collectNaver } from "./naver";
 import { addRun, appendData, getSettings, updateRun } from "./store";
 import type { AnalysisRun, QueryConfig, RawItem } from "./types";
 import { collectYoutube } from "./youtube";
 
-const DEFAULT_TARGET_VOC_COUNT = 10000;
+const DEFAULT_TARGET_VOC_COUNT = 1000;
 const DEFAULT_RAW_POOL_LIMIT = 10000;
+const DEFAULT_YOUTUBE_VIDEOS_PER_KEYWORD = 50;
+const DEFAULT_YOUTUBE_COMMENTS_PER_VIDEO = 100;
 const MAX_ANALYSIS_ITEMS = 10000;
-const SOURCE_ORDER = ["naver_blog", "naver_cafe", "naver_news", "youtube"] as const;
+const SOURCE_ORDER = ["smartstore_review", "naver_blog", "naver_cafe", "naver_news", "youtube"] as const;
 
 export async function runAnalysis(config: Partial<QueryConfig> = {}) {
   const settings = await getSettings();
   const productName = config.productName || "매일 바이오 그릭요거트";
   const analysisMode = config.analysisMode || "ultra";
-  const keywords = normalizeKeywords(config.keywords?.length ? config.keywords : defaultKeywords(productName, analysisMode));
+  const keywords = [productName.trim()].filter(Boolean);
   const targetVocCount = Math.min(Math.max(config.targetVocCount || DEFAULT_TARGET_VOC_COUNT, 1), MAX_ANALYSIS_ITEMS);
   const rawPoolLimit = Math.min(Math.max(config.maxRawItems || DEFAULT_RAW_POOL_LIMIT, targetVocCount), MAX_ANALYSIS_ITEMS);
   const run: AnalysisRun = {
@@ -31,7 +32,12 @@ export async function runAnalysis(config: Partial<QueryConfig> = {}) {
   try {
     const [naverItems, youtubeItems] = await Promise.all([
       collectNaver(settings, keywords, config.naverPerKeyword || 1000),
-      collectYoutube(settings, keywords, config.youtubeVideosPerKeyword || 25, config.youtubeCommentsPerVideo || 80)
+      collectYoutube(
+        settings,
+        keywords,
+        config.youtubeVideosPerKeyword || DEFAULT_YOUTUBE_VIDEOS_PER_KEYWORD,
+        config.youtubeCommentsPerVideo || DEFAULT_YOUTUBE_COMMENTS_PER_VIDEO
+      )
     ]);
     const rawItems = takeBalancedRawItems(dedupeRawItems([...naverItems, ...youtubeItems]), rawPoolLimit)
       .map((item) => ({ ...item, runId: run.id }));
@@ -44,10 +50,12 @@ export async function runAnalysis(config: Partial<QueryConfig> = {}) {
               productName,
               candidateItems,
               targetVocCount,
-              isStrictValidVoc
+              (record) => isStrictValidVoc(record, productName)
             )
           ).records
-        : analyzeRawItemsLocally(productName, rawItems).slice(0, targetVocCount);
+        : analyzeRawItemsLocally(productName, candidateItems)
+            .filter((record) => isStrictValidVoc(record, productName))
+            .slice(0, targetVocCount);
     await appendData(run.id, rawItems, vocRecords);
     await updateRun(run.id, {
       status: "completed",
@@ -67,14 +75,6 @@ export async function runAnalysis(config: Partial<QueryConfig> = {}) {
     await updateRun(run.id, { status: "failed", completedAt: new Date().toISOString(), error: message });
     throw error;
   }
-}
-
-function normalizeKeywords(keywords: string[]) {
-  return Array.from(new Set(keywords.map((keyword) => keyword.trim()).filter(Boolean))).slice(0, 20);
-}
-
-function defaultKeywords(productName: string, analysisMode: QueryConfig["analysisMode"]) {
-  return analysisMode === "ultra" ? generateSearchKeywords(productName) : [productName];
 }
 
 function takeBalancedRawItems(items: RawItem[], limit: number) {
